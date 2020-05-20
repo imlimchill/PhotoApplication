@@ -14,7 +14,7 @@ public class StickerMainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_sticker_main);
+        setContentView(R.layout.view_sticker_list);
 
         noneBtn=(ImageButton)findViewById(R.id.noneBtn);
         favBtn=(ImageButton)findViewById(R.id.favBtn);
