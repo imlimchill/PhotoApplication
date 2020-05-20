@@ -1,8 +1,13 @@
 package com.MrPhoto.photoapplication;
 
 import androidx.appcompat.app.AppCompatActivity;
+
+import android.content.Context;
 import android.os.Bundle;
+import android.view.LayoutInflater;
+import android.view.View;
 import android.widget.Button;
+import android.widget.LinearLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -31,5 +36,20 @@ public class MainActivity extends AppCompatActivity {
         photoBtn = (Button)findViewById(R.id.photoBtn);
         filterBtn = (Button)findViewById(R.id.filterBtn);
 
+        stikerBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                LayoutInflater inflater=(LayoutInflater)getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+                LinearLayout linear=(LinearLayout)inflater.inflate(R.layout.activity_sticker_main,null);
+                LinearLayout.LayoutParams paramlinear=new LinearLayout.LayoutParams(
+                        LinearLayout.LayoutParams.MATCH_PARENT,
+                        LinearLayout.LayoutParams.MATCH_PARENT
+                );
+                getWindow().addContentView(linear,paramlinear);
+            }
+        });
+
     }
+
+
 }
