@@ -10,20 +10,12 @@
 
     <FrameLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_weight="3">
-
-        <!--TODO 여기에 정해진 카메라 화면이 들어가야 한다. 고정된 3:4비율의 화면-->
-        <TextureView
-            android:id="@+id/textureView"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content" />
+        android:layout_height="wrap_content">
 
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="70dp"
-            android:orientation="horizontal"
-            android:layout_marginTop="20dp">
+            android:orientation="horizontal">
 
             <Button
                 android:id="@+id/settingBtn"
@@ -57,13 +49,17 @@
 
         </LinearLayout>
 
+        <!--TODO 여기에 정해진 카메라 화면이 들어가야 한다. 고정된 3:4비율의 화면-->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="550dp"
+            android:background="#11111111"/>
+
     </FrameLayout>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_weight="10"
-        android:background="#11111111">
+        android:layout_height="match_parent">
 
         <Button
             android:id="@+id/stikerBtn"
