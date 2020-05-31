@@ -6,9 +6,16 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.LinearLayout;
+import android.widget.Toast;
 
+import androidx.annotation.DrawableRes;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
+
+import com.MrPhoto.photoapplication.util.Utils;
+import com.google.android.flexbox.FlexboxLayout;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -71,6 +78,11 @@ public class MainActivity extends AppCompatActivity {
      */
     private View filterBtn;
 
+    private int dp4;
+    private int dp40;
+    private int dp12;
+    private int dp100;
+
     private ScreenRatio mScreenRatio = ScreenRatio.S3_4;
 
     @Override
@@ -79,6 +91,11 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         // region [ 변수 초기화 ]
+
+        dp4 = Utils.dp2px(this, 4);
+        dp12 = Utils.dp2px(this, 12);
+        dp40 = Utils.dp2px(this, 40);
+        dp100 = Utils.dp2px(this, 100);
 
         pnlMain = findViewById(R.id.pnlMain);
         pnlTop = findViewById(R.id.pnlTop);
@@ -120,6 +137,59 @@ public class MainActivity extends AppCompatActivity {
                         MainActivity.this.onBackPressed();
                     }
                 });
+
+                // 스티커 버튼의 리스트
+                LinearLayout listStikerItems = pnlStiker.findViewById(R.id.list_sticker_items);
+
+                // 실제 스티커 리스트
+                final FlexboxLayout listStiker = pnlStiker.findViewById(R.id.list_sticker);
+
+                // 스티커 버튼의 레이아웃 정의
+                LinearLayout.LayoutParams btnStickerButtonLayoutParams = new LinearLayout.LayoutParams(dp40, dp40);
+                btnStickerButtonLayoutParams.setMarginEnd(dp12);
+
+                // 즐겨찾기 버튼 추가
+                ImageView btnFav = new ImageView(MainActivity.this);
+                btnFav.setLayoutParams(btnStickerButtonLayoutParams);
+                btnFav.setPadding(dp4, dp4, dp4, dp4);
+                btnFav.setAdjustViewBounds(true);
+                btnFav.setImageResource(R.drawable.favorite);
+                btnFav.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // 스티커의 레이아웃 정의
+                        FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
+                        stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
+
+                        addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
+                        addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
+                        addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
+                        addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
+                        addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
+                        addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
+                    }
+                });
+
+                listStikerItems.addView(btnFav);
+
+                // ??? 스티커 추가
+                ImageView btnStiker1 = new ImageView(MainActivity.this);
+                btnStiker1.setLayoutParams(btnStickerButtonLayoutParams);
+                btnStiker1.setPadding(dp4, dp4, dp4, dp4);
+                btnStiker1.setAdjustViewBounds(true);
+                btnStiker1.setImageResource(R.drawable.slist);
+                btnStiker1.setOnClickListener(new View.OnClickListener() {
+                    @Override
+                    public void onClick(View v) {
+                        // 첫번째 스티커 버튼이 추가 되었을 때 어떤 행동을 해야 할지 정의
+                        Toast.makeText(MainActivity.this, "스티커1 버튼 클릭", Toast.LENGTH_SHORT).show();
+                    }
+                });
+
+                listStikerItems.addView(btnStiker1);
+
+                // 기본으로 즐겨찾기를 먼저 자동으로 클릭
+                btnFav.performClick();
             }
         });
 
@@ -151,7 +221,6 @@ public class MainActivity extends AppCompatActivity {
                         MainActivity.this.onBackPressed();
                     }
                 });
-
             }
         });
 
@@ -196,6 +265,22 @@ public class MainActivity extends AppCompatActivity {
             ((ConstraintLayout.LayoutParams) pnlTopBtn.getLayoutParams()).topMargin = (topHeight - pnlTopHeight) / 2;
         if (bottomHeight - pnlBottomHeight > 0)
             ((ConstraintLayout.LayoutParams) pnlBottomBtn.getLayoutParams()).bottomMargin = (bottomHeight - pnlBottomHeight) / 2;
+    }
+
+    public void addSticker(FlexboxLayout.LayoutParams stickerLayoutParams, FlexboxLayout listSticker, @DrawableRes int resId) {
+        ImageView sticker = new ImageView(MainActivity.this);
+        sticker.setLayoutParams(stickerLayoutParams);
+        sticker.setPadding(dp4, dp4, dp4, dp4);
+        sticker.setAdjustViewBounds(true);
+        sticker.setImageResource(resId);
+        sticker.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Toast.makeText(MainActivity.this, "스티커 클릭 되었어요.", Toast.LENGTH_SHORT).show();
+            }
+        });
+
+        listSticker.addView(sticker);
     }
 
     @Override

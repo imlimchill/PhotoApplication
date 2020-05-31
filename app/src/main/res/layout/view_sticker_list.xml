@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/stikerList"
     android:layout_width="match_parent"
@@ -48,28 +49,8 @@
                     android:layout_height="40dp"
                     android:layout_marginEnd="5dp"
                     android:adjustViewBounds="true"
-                    android:src="@drawable/boundary"
                     android:alpha=".60"
-                    tools:ignore="ContentDescription"/>
-
-                <ImageView
-                    android:id="@+id/s_favBtn"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="12dp"
-                    android:adjustViewBounds="true"
-                    android:padding="4dp"
-                    android:src="@drawable/favorite"
-                    tools:ignore="ContentDescription" />
-
-                <ImageView
-                    android:id="@+id/sListBtn"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="12dp"
-                    android:adjustViewBounds="true"
-                    android:padding="3.5dp"
-                    android:src="@drawable/slist"
+                    android:src="@drawable/line"
                     tools:ignore="ContentDescription" />
 
             </LinearLayout>
@@ -83,15 +64,16 @@
         android:layout_height="250dp"
         android:background="#8E8B8B">
 
-
-
-        <LinearLayout
+        <com.google.android.flexbox.FlexboxLayout
+            android:id="@+id/list_sticker"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            tools:ignore="UselessLeaf">
-
-        </LinearLayout>
+            android:padding="12dp"
+            app:alignContent="flex_start"
+            app:alignItems="flex_start"
+            app:flexDirection="row"
+            app:flexWrap="wrap"
+            app:justifyContent="space_between" />
 
     </ScrollView>
 

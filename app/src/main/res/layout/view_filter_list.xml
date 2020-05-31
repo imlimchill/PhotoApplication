@@ -49,10 +49,11 @@
                     android:layout_marginEnd="12dp"
                     android:adjustViewBounds="true"
                     android:padding="2.5dp"
-                    android:src="@drawable/filterlist"
+                    android:src="@drawable/filter"
                     tools:ignore="ContentDescription"/>
 
             </LinearLayout>
+
         </HorizontalScrollView>
 
     </FrameLayout>
