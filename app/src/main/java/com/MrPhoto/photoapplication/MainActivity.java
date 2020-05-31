@@ -1,10 +1,8 @@
 package com.MrPhoto.photoapplication;
 
-import android.graphics.Color;
-
-import androidx.appcompat.app.AppCompatActivity;
-
 import android.content.Context;
+import android.content.DialogInterface;
+import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
 import android.hardware.camera2.CameraAccessException;
@@ -20,9 +18,6 @@ import android.media.Image;
 import android.media.ImageReader;
 import android.os.Build;
 import android.os.Bundle;
-import android.view.View;
-import android.view.ViewGroup;
-import android.view.animation.AnimationUtils;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.HandlerThread;
@@ -31,19 +26,20 @@ import android.util.SparseIntArray;
 import android.view.Surface;
 import android.view.TextureView;
 import android.view.View;
+import android.view.ViewGroup;
+import android.view.animation.AnimationUtils;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.constraintlayout.widget.ConstraintLayout;
 
 import com.MrPhoto.photoapplication.util.Utils;
 import com.google.android.flexbox.FlexboxLayout;
-
-import android.widget.Toast;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -58,7 +54,15 @@ import java.util.UUID;
 
 public class MainActivity extends AppCompatActivity {
 
+    // 화면 비율 정의
     private enum ScreenRatio {S1_1, S3_4, S16_9}
+
+    // 상수 값 선언
+    private int dp4;
+    private int dp40;
+    private int dp12;
+    private int dp100;
+    private ScreenRatio mScreenRatio = ScreenRatio.S3_4;
 
     /**
      * 메인 패널
@@ -117,47 +121,16 @@ public class MainActivity extends AppCompatActivity {
      */
     private View filterBtn;
 
-    private int dp4;
-    private int dp40;
-    private int dp12;
-    private int dp100;
+    // 권한 허용을 위한 메소드가 있는 클래스 선언
+    private PermissionSupport permissionHelper;
 
-    private ScreenRatio mScreenRatio = ScreenRatio.S3_4;
-    /**
-     * 권한 허용을 위한 메소드가 있는 클래스 선언
-     */
-    PermissionSupport permission;
-
-    /**
-     * 설정 창 버튼
-     */
-    Button settingBtn;
-    /**
-     * 화면 비율 변환 버튼
-     */
-    Button rationBtn;
-    /**
-     * 정방향, 후방향 화면 전환 버튼
-     */
-    Button reverseBtn;
-    /**
-     * 스티커 버튼
-     */
-    Button stikerBtn;
-    /**
-     * 촬영 버튼
-     */
-    Button photoBtn;
-    /**
-     * 필터 버튼
-     */
-    Button filterBtn;
-
+    // 카메라 화면 View
     private TextureView textureView;
 
-    //백버튼이 눌린 마지막 시간을 저장함.
+    // 백버튼이 눌린 마지막 시간을 저장함.
     private long backKeyPressedTime = 0;
 
+    // 카메라 기본 orientation
     private static final SparseIntArray ORIENTATIONS = new SparseIntArray();
 
     static {
@@ -168,6 +141,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private String cameraId;
+
     /**
      * 물리 카메라 표현, 캡쳐세션, 캡쳐리퀘스 생성
      */
@@ -224,7 +198,7 @@ public class MainActivity extends AppCompatActivity {
         pnlMain = findViewById(R.id.pnlMain);
         pnlTop = findViewById(R.id.pnlTop);
         pnlBottom = findViewById(R.id.pnlBottom);
-        pnlCamera = findViewById(R.id.pnlCamera);
+        pnlCamera = findViewById(R.id.textureView);
         pnlTopBtn = findViewById(R.id.pnlTopBtn);
         pnlBottomBtn = findViewById(R.id.pnlBottomBtn);
 
@@ -234,14 +208,11 @@ public class MainActivity extends AppCompatActivity {
         stikerBtn = findViewById(R.id.stikerBtn);
         photoBtn = findViewById(R.id.photoBtn);
         filterBtn = findViewById(R.id.filterBtn);
-
         // endregion
-
-        // 권한을 확인하기 위한 코드 실행
-        checkPermission();
 
         // region [ 이벤트 리스너 등록 ]
 
+        // 스티커 버튼 클릭 시
         stikerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -320,13 +291,7 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        photoBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-            }
-        });
-
+        // 필터 버튼 클릭 시
         filterBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -351,15 +316,8 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-        // 사진 프리뷰를 위한 선언
-        textureView = (TextureView)findViewById(R.id.textureView);
-        // 테스트를 위해 사용할 수 있다.
-        assert textureView != null;
-        textureView.setSurfaceTextureListener(textureLisener);
-
-        /** 사진 버튼을 누르면 사진 찍는 기능 구현 */
+        // 사진 버튼을 누르면 사진 찍는 기능 구현
         photoBtn.setOnClickListener(new View.OnClickListener() {
-            boolean cliked = true;
             @Override
             public void onClick(View view) {
                 takePicture();
@@ -368,6 +326,27 @@ public class MainActivity extends AppCompatActivity {
 
         // endregion
 
+        /* region [ 카메라 정보 등록 ] */
+        // 사진 프리뷰를 위한 선언
+        textureView = (TextureView) pnlCamera;
+        if (textureView == null) {
+            new AlertDialog.Builder(this)
+                    .setTitle("알림")
+                    .setMessage("카메라 화면을 찾을 수 없습니다.")
+                    .setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                        @Override
+                        public void onClick(DialogInterface dialog, int which) {
+                            dialog.dismiss();
+                            finish();
+                        }
+                    }).show();
+            return;
+        }
+        textureView.setSurfaceTextureListener(textureListener);
+        /* endregion */
+
+        // 카메라 권한을 확인하기 위한 코드 실행
+        checkPermission();
     }
 
     @Override
@@ -425,6 +404,22 @@ public class MainActivity extends AppCompatActivity {
         listSticker.addView(sticker);
     }
 
+    /**
+     * 권한 허용을 해야 하는지 체크하는 함수
+     */
+    public void checkPermission() {
+        // SDK 23이하(안드로이드 6.0이하) 버전에서는 사용자 권한 허용이 필요하지 않음
+        if (Build.VERSION.SDK_INT >= 23) {
+            permissionHelper = new PermissionSupport(this, this);
+
+            // 권한 요청이 false 값을 리턴한다면 권한 허용을 요청한다.
+            if (!permissionHelper.checkPermission()) {
+                permissionHelper.requestPermissions();
+            }
+        }
+    }
+
+    // 뒤로가기 버튼 클릭 되었을 경우 실행 함수
     @Override
     public void onBackPressed() {
         // 스티커 패널 열려 있을 시 닫아주기
@@ -450,7 +445,7 @@ public class MainActivity extends AppCompatActivity {
         /** 마지막으로 백버튼을 눌렀던 시간에 2초를 더해 현재시간과 비교 후,
          마지막으로 백버튼을 눌렀던 시간이 2초가 지나지 않았으면 앱을 종료시킴.
          (메시지가 유지되는 2초동안 백버튼을 한 번 더 누르면 앱 종료)*/
-        if (System.currentTimeMillis() <= backKeyPressedTime + 2000){
+        if (System.currentTimeMillis() <= backKeyPressedTime + 2000) {
             finish();
 
         }
@@ -460,20 +455,20 @@ public class MainActivity extends AppCompatActivity {
      * 사진을 찍기 위한 함수
      */
     private void takePicture() {
-        if(cameraDevice == null) {
+        if (cameraDevice == null) {
             return;
         }
-        CameraManager manager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
+        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
             Size[] jpegSizes = null;
-            if(characteristics != null) {
+            if (characteristics != null) {
                 jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
 
                 // 이미지의 사이즈 결정
                 int width = 640;
                 int height = 480;
-                if(jpegSizes != null && jpegSizes.length > 0) {
+                if (jpegSizes != null && jpegSizes.length > 0) {
                     width = jpegSizes[0].getWidth();
                     height = jpegSizes[0].getHeight();
                 }
@@ -511,12 +506,13 @@ public class MainActivity extends AppCompatActivity {
                             e.getStackTrace();
                         } finally {
                             {
-                                if(image != null) {
+                                if (image != null) {
                                     image.close();
                                 }
                             }
                         }
                     }
+
                     // 직접적으로 저장하는 부분
                     private void save(byte[] bytes) throws IOException {
                         OutputStream outputStream = null;
@@ -524,7 +520,7 @@ public class MainActivity extends AppCompatActivity {
                             outputStream = new FileOutputStream(file);
                             outputStream.write(bytes);
                         } finally {
-                            if(outputStream != null) {
+                            if (outputStream != null) {
                                 outputStream.close();
                             }
                         }
@@ -572,7 +568,7 @@ public class MainActivity extends AppCompatActivity {
     private void createCameraPreView() {
         try {
             // 캑쳐 세션을 만들기 전에 프리뷰를 위한 Subface를 준비
-            SurfaceTexture texture =  textureView.getSurfaceTexture();
+            SurfaceTexture texture = textureView.getSurfaceTexture();
             assert texture != null;
             texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
             // 브리뷰를 위한 Subface 생성 > 이미지를 찍기 위해 사용
@@ -608,7 +604,7 @@ public class MainActivity extends AppCompatActivity {
      * createCameraPreview 함수 안에서 실행된다.
      */
     private void updatePreview() {
-        if(cameraDevice == null) {
+        if (cameraDevice == null) {
             Toast.makeText(MainActivity.this, "ERROR", Toast.LENGTH_SHORT).show();
         }
         captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
@@ -623,15 +619,22 @@ public class MainActivity extends AppCompatActivity {
      * 카메라를 열기 위한 함수
      */
     private void openCamera() {
+        if (!permissionHelper.checkPermission()) return;
+
         // 카메라 목록, 특성, 모니터링 > 사용가능한 카메라를 관리하고 제공
-        CameraManager manager = (CameraManager)getSystemService(Context.CAMERA_SERVICE);
+        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        if (manager == null) {
+            Toast.makeText(this, "카메라 서비스를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
         try {
             cameraId = manager.getCameraIdList()[0];
             // 카메라 특성 정보 > CameraDevice에 대한 메타데이터 제공
             CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             assert map != null;
-            imageDimension= map.getOutputSizes(SurfaceTexture.class)[0];
+            imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
             // check realtime permission if run higher API 23
             checkPermission();
             manager.openCamera(cameraId, stateCallback, null);
@@ -641,10 +644,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
-    /**
-     *
-     */
-    TextureView.SurfaceTextureListener textureLisener = new TextureView.SurfaceTextureListener() {
+    TextureView.SurfaceTextureListener textureListener = new TextureView.SurfaceTextureListener() {
         @Override
         public void onSurfaceTextureAvailable(SurfaceTexture surfaceTexture, int i, int i1) {
             openCamera();
@@ -680,7 +680,7 @@ public class MainActivity extends AppCompatActivity {
             openCamera();
         } else {
             // 아니라면 카메라에 textureLisener를 통해 제대로 동작할 수 있도록 만들어 준다.
-            textureView.setSurfaceTextureListener(textureLisener);
+            textureView.setSurfaceTextureListener(textureListener);
         }
     }
 
@@ -722,26 +722,10 @@ public class MainActivity extends AppCompatActivity {
         mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
     }
 
-    //------------------------//------------------------//------------------------//------------------------//------------------------//
-
-    /**
-     * 권한 허용을 해야 하는지 체크하는 함수
-     */
-    public void checkPermission() {
-        // SDK 23이하(안드로이드 6.0이하) 버전에서는 사용자 권한 허용이 필요하지 않음
-        if (Build.VERSION.SDK_INT >= 23) {
-            permission = new PermissionSupport(this, this);
-
-            // 권한 요청이 false값을 리턴한다면 권한 허용을 요청한다.
-            if (!permission.checkPermssion()) {
-                permission.requsetPermission();
-            }
-        }
-    } // end checkPermission
-
     /**
      * 카메라 사용을 위한 사용자의 권한 허용받기위한 함수
      * 만약 허용이 되지 않았다면 권한 허용에 대해 다시 물어본다.
+     *
      * @param requestCode
      * @param permissions
      * @param grantResults
@@ -749,10 +733,10 @@ public class MainActivity extends AppCompatActivity {
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
         // 리턴이 false라면 허용을 하지 않은 것. 그러면 여기서 권한을 허용하지 않을건지 다시 물어봄
-        if (!permission.permissionResult(requestCode, permissions, grantResults)) {
-            permission.requsetPermission();
+        if (!permissionHelper.permissionResult(requestCode, permissions, grantResults)) {
+            permissionHelper.requestPermissions();
+        } else {
+            openCamera();
         }
-    } // end permisson
-
-
+    }
 }
