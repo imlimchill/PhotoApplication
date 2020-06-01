@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:id="@+id/filterList"
     android:layout_width="match_parent"
@@ -30,27 +31,10 @@
                 android:layout_height="wrap_content"
                 android:background="#00000000"
                 android:paddingStart="12dp"
-                tools:ignore="RtlSymmetry">
+                tools:ignore="RtlSymmetry"
+                android:orientation="horizontal">
 
-                <ImageView
-                    android:id="@+id/f_favBtn"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="12dp"
-                    android:adjustViewBounds="true"
-                    android:padding="4dp"
-                    android:src="@drawable/favorite"
-                    tools:ignore="ContentDescription"/>
 
-                <ImageView
-                    android:id="@+id/fListBtn"
-                    android:layout_width="40dp"
-                    android:layout_height="40dp"
-                    android:layout_marginEnd="12dp"
-                    android:adjustViewBounds="true"
-                    android:padding="2.5dp"
-                    android:src="@drawable/filter"
-                    tools:ignore="ContentDescription"/>
 
             </LinearLayout>
 
@@ -58,20 +42,22 @@
 
     </FrameLayout>
 
-    <HorizontalScrollView
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="180dp"
+        android:layout_height="250dp"
         android:background="#8E8B8B">
 
-        <LinearLayout
+        <com.google.android.flexbox.FlexboxLayout
+            android:id="@+id/list_filter"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            tools:ignore="UselessLeaf">
+            android:padding="12dp"
+            app:alignContent="flex_start"
+            app:alignItems="flex_start"
+            app:flexDirection="row"
+            app:flexWrap="wrap"
+            app:justifyContent="space_between" />
 
-        </LinearLayout>
-
-
-    </HorizontalScrollView>
+    </ScrollView>
 
 </LinearLayout>
