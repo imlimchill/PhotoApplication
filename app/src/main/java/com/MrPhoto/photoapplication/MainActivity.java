@@ -48,7 +48,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
-import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -122,10 +122,10 @@ public class MainActivity extends AppCompatActivity {
     private View filterBtn;
 
     // 권한 허용을 위한 메소드가 있는 클래스 선언
-    private PermissionSupport permissionHelper;
+    private PermissionSupport mPermissionHelper;
 
     // 카메라 화면 View
-    private TextureView textureView;
+    private TextureView mCameraPrview;
 
     // 백버튼이 눌린 마지막 시간을 저장함.
     private long backKeyPressedTime = 0;
@@ -140,21 +140,21 @@ public class MainActivity extends AppCompatActivity {
         ORIENTATIONS.append(Surface.ROTATION_270, 180);
     }
 
-    private String cameraId;
+    private String mCameraId;
 
     /**
      * 물리 카메라 표현, 캡쳐세션, 캡쳐리퀘스 생성
      */
-    private CameraDevice cameraDevice;
+    private CameraDevice mCameraDevice;
     /**
      * 카메라로 얻은 이미지를 Surface에 출력요청
      */
-    private CameraCaptureSession cameraCaptureSessions;
+    private CameraCaptureSession mCameraCaptionSession;
     /**
      * 카메라로 어떻게 이미지를 얻을까 결정
      */
-    private CaptureRequest.Builder captureRequestBuilder;
-    private Size imageDimension;
+    private CaptureRequest.Builder mCaptureRequestBuilder;
+    private Size mImageDimension;
     private ImageReader imageReader;
 
     // 사진 저장을 위해 선언
@@ -163,23 +163,22 @@ public class MainActivity extends AppCompatActivity {
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
 
-    CameraDevice.StateCallback stateCallback = new CameraDevice.StateCallback() {
+    CameraDevice.StateCallback mCameraDeviceStateCallback = new CameraDevice.StateCallback() {
         @Override
         public void onOpened(CameraDevice camera) {
-            cameraDevice = camera;
-            createCameraPreView();
+            mCameraDevice = camera;
+            createCameraPreview();
         }
 
         @Override
         public void onDisconnected(CameraDevice cameraDevice) {
-            cameraDevice.close();
+            mCameraDevice.close();
         }
 
         @Override
         public void onError(CameraDevice cameraDevice, int i) {
-            cameraDevice.close();
-            cameraDevice = null;
-
+            mCameraDevice.close();
+            mCameraDevice = null;
         }
     };
 
@@ -212,7 +211,7 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 이벤트 리스너 등록 ]
 
-        // 스티커 버튼 클릭 시
+        // region [ 스티커 버튼 클릭 시 ]
         stikerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -294,8 +293,9 @@ public class MainActivity extends AppCompatActivity {
                 btnAll.performClick();
             }
         });
+        // endregion
 
-        // 필터 버튼 클릭 시
+        // region [ 필터 버튼 클릭 시 ]
         filterBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -325,7 +325,7 @@ public class MainActivity extends AppCompatActivity {
                 final FlexboxLayout listFilter = pnlFilter.findViewById(R.id.list_filter);
 
                 //스티커 버튼의 레이아웃 정의
-                LinearLayout.LayoutParams btnFilterButtonLayoutParams = new LinearLayout.LayoutParams(dp40,dp40);
+                LinearLayout.LayoutParams btnFilterButtonLayoutParams = new LinearLayout.LayoutParams(dp40, dp40);
                 btnFilterButtonLayoutParams.setMarginEnd(dp12);
 
                 //즐겨찾기 필터 버튼
@@ -340,7 +340,6 @@ public class MainActivity extends AppCompatActivity {
                         // 스티커의 레이아웃 정의
                         FlexboxLayout.LayoutParams filterLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                         filterLayoutParams.setMargins(dp4, dp4, dp4, dp4);
-
 
 
                         addFilter(filterLayoutParams, listFilter, R.drawable.filter_list);
@@ -375,21 +374,24 @@ public class MainActivity extends AppCompatActivity {
                 btnAll.performClick();
             }
         });
+        // endregion
 
-        // 사진 버튼을 누르면 사진 찍는 기능 구현
+        // region [ 사진 버튼 클릭 시 ]
         photoBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
                 takePicture();
             }
         });
+        // endregion
 
         // endregion
 
-        /* region [ 카메라 정보 등록 ] */
-        // 사진 프리뷰를 위한 선언
-        textureView = (TextureView) pnlCamera;
-        if (textureView == null) {
+        // region [ 카메라 정보 등록 ]
+
+        // 카메라 프리뷰를 위한 선언
+        mCameraPrview = (TextureView) pnlCamera;
+        if (mCameraPrview == null) {
             new AlertDialog.Builder(this)
                     .setTitle("알림")
                     .setMessage("카메라 화면을 찾을 수 없습니다.")
@@ -402,13 +404,19 @@ public class MainActivity extends AppCompatActivity {
                     }).show();
             return;
         }
-        textureView.setSurfaceTextureListener(textureListener);
-        /* endregion */
+        mCameraPrview.setSurfaceTextureListener(textureListener);
+
+        // endregion
 
         // 카메라 권한을 확인하기 위한 코드 실행
         checkPermission();
     }
 
+    /**
+     * Window 가 Focus 되었을 경우 (화면이 디스플레이에 표출 되는 경우) 실행
+     * 카메라 프리뷰의 비율을 계산하여 표시
+     * 1:1, 4:3, 16:9 이용 가능
+     */
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         if (!hasFocus) return;
@@ -434,7 +442,6 @@ public class MainActivity extends AppCompatActivity {
         pnlBottom.getLayoutParams().height = bottomHeight;
         pnlTopBtn.setBackgroundColor(Color.TRANSPARENT);
 
-
         ConstraintLayout.LayoutParams pnlCameraLayoutParams = (ConstraintLayout.LayoutParams) pnlCamera.getLayoutParams();
         pnlCameraLayoutParams.topMargin = topHeight;
         pnlCameraLayoutParams.bottomMargin = bottomHeight;
@@ -451,6 +458,9 @@ public class MainActivity extends AppCompatActivity {
             ((ConstraintLayout.LayoutParams) pnlBottomBtn.getLayoutParams()).bottomMargin = (bottomHeight - pnlBottomHeight) / 2;
     }
 
+    /**
+     * 스티커 리스트를 클릭 한 경우 동적으로 스티커 추가
+     */
     public void addSticker(FlexboxLayout.LayoutParams stickerLayoutParams, FlexboxLayout listSticker, @DrawableRes int resId) {
         ImageView sticker = new ImageView(MainActivity.this);
         sticker.setLayoutParams(stickerLayoutParams);
@@ -467,6 +477,9 @@ public class MainActivity extends AppCompatActivity {
         listSticker.addView(sticker);
     }
 
+    /**
+     * 필터 리스트를 클릭 한 경우 동적으로 필터 추가
+     */
     public void addFilter(FlexboxLayout.LayoutParams filterLayoutParams, FlexboxLayout listFilter, @DrawableRes int resId) {
         ImageView filter = new ImageView(MainActivity.this);
         filter.setLayoutParams(filterLayoutParams);
@@ -484,21 +497,23 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 권한 허용을 해야 하는지 체크하는 함수
+     * 카메라 프리뷰 권한을 가지고 있는지 체크하는 함수
      */
     public void checkPermission() {
         // SDK 23이하(안드로이드 6.0이하) 버전에서는 사용자 권한 허용이 필요하지 않음
         if (Build.VERSION.SDK_INT >= 23) {
-            permissionHelper = new PermissionSupport(this, this);
+            mPermissionHelper = new PermissionSupport(this, this);
 
             // 권한 요청이 false 값을 리턴한다면 권한 허용을 요청한다.
-            if (!permissionHelper.checkPermission()) {
-                permissionHelper.requestPermissions();
+            if (!mPermissionHelper.checkPermission()) {
+                mPermissionHelper.requestPermissions();
             }
         }
     }
 
-    // 뒤로가기 버튼 클릭 되었을 경우 실행 함수
+    /**
+     * 뒤로가기 버튼 클릭 되었을 경우 실행 되는 함수
+     */
     @Override
     public void onBackPressed() {
         // 스티커 패널 열려 있을 시 닫아주기
@@ -508,6 +523,8 @@ public class MainActivity extends AppCompatActivity {
             pnlStiker = null;
             return;
         }
+
+        // 필터 패널 열려 있을 시 닫아주기
         if (pnlFilter != null) {
             pnlFilter.setAnimation(AnimationUtils.loadAnimation(MainActivity.this, R.anim.slide_out_down));
             pnlMain.removeView(pnlFilter);
@@ -518,15 +535,95 @@ public class MainActivity extends AppCompatActivity {
         if (System.currentTimeMillis() > backKeyPressedTime + 2000) {
             backKeyPressedTime = System.currentTimeMillis();
             Toast.makeText(this, "\'뒤로\' 버튼을 한번 더 누르면 종료됩니다.", Toast.LENGTH_SHORT).show();
-            return;//백버튼이 한 번 눌리면 종료 안내 메시지가 뜬다.
+            return; //백버튼이 한 번만 눌리면 종료 안내 메시지가 뜬다.
         }
 
-        /** 마지막으로 백버튼을 눌렀던 시간에 2초를 더해 현재시간과 비교 후,
-         마지막으로 백버튼을 눌렀던 시간이 2초가 지나지 않았으면 앱을 종료시킴.
-         (메시지가 유지되는 2초동안 백버튼을 한 번 더 누르면 앱 종료)*/
-        if (System.currentTimeMillis() <= backKeyPressedTime + 2000) {
-            finish();
+        /* 마지막으로 백버튼을 눌렀던 시간에 2초를 더해 현재시간과 비교 후,
+           마지막으로 백버튼을 눌렀던 시간이 2초가 지나지 않았으면 앱을 종료시킴.
+           (메시지가 유지되는 2초동안 백버튼을 한 번 더 누르면 앱 종료) */
+        if (System.currentTimeMillis() <= backKeyPressedTime + 2000) finish();
+    }
 
+    /**
+     * 카메라를 열기 위한 함수
+     */
+    private void openCamera() {
+        if (!mPermissionHelper.checkPermission()) return;
+
+        // 카메라 목록, 특성, 모니터링 > 사용가능한 카메라를 관리하고 제공
+        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
+        if (manager == null) {
+            Toast.makeText(this, "카메라 서비스를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            mCameraId = manager.getCameraIdList()[0];
+            // 카메라 특성 정보 > CameraDevice에 대한 메타데이터 제공
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
+            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
+            assert map != null;
+            mImageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
+            manager.openCamera(mCameraId, mCameraDeviceStateCallback, null);
+        } catch (CameraAccessException e) {
+            Toast.makeText(this, "카메라 접근에 문제가 발생 했습니다. " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 카메라의 프리뷰를 만드는 함수
+     * 해당 함수 안에서 updatePreview를 실행한다.
+     */
+    private void createCameraPreview() {
+        try {
+            // 캡쳐 세션을 만들기 전에 프리뷰를 위한 SurfaceTexture 준비
+            SurfaceTexture surfaceTexture = mCameraPrview.getSurfaceTexture();
+
+            assert surfaceTexture != null;
+            assert mImageDimension != null;
+            surfaceTexture.setDefaultBufferSize(mImageDimension.getWidth(), mImageDimension.getHeight());
+
+            // 프리뷰를 위한 Surface 생성 > 이미지를 찍기 위해 사용
+            Surface surface = new Surface(surfaceTexture);
+
+            // 캡쳐 세션을 생성하기 위해 아래의 메소드 호출
+            mCaptureRequestBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
+            mCaptureRequestBuilder.addTarget(surface);
+            mCameraDevice.createCaptureSession(Collections.singletonList(surface), new CameraCaptureSession.StateCallback() {
+                @Override
+                public void onConfigured(CameraCaptureSession cameraCaptureSession) {
+                    if (mCameraDevice == null) return;
+                    mCameraCaptionSession = cameraCaptureSession;
+
+                    // preview 의 계속적인 업데이트를 해주는 함수실행
+                    updatePreview();
+                }
+
+                @Override
+                public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
+                    Toast.makeText(MainActivity.this, "changed", Toast.LENGTH_SHORT).show();
+                }
+            }, null);
+        } catch (CameraAccessException e) {
+            Toast.makeText(this, "카메라 접근에 문제가 발생 했습니다. " + e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    /**
+     * 카메라 perview에 대한 계속적인 변경을 시켜주는 thread 를 실행하는 함수
+     * createCameraPreview 함수 안에서 실행된다.
+     */
+    private void updatePreview() {
+        if (mCameraDevice == null) {
+            Toast.makeText(MainActivity.this, "카메라 정보가 없습니다.", Toast.LENGTH_SHORT).show();
+            return;
+        }
+
+        try {
+            mCaptureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
+            mCameraCaptionSession.setRepeatingRequest(mCaptureRequestBuilder.build(), null, mBackgroundHandler);
+        } catch (CameraAccessException e) {
+            Toast.makeText(this, "카메라 접근에 문제가 발생 했습니다. " + e.getMessage(), Toast.LENGTH_SHORT).show();
         }
     }
 
@@ -534,12 +631,11 @@ public class MainActivity extends AppCompatActivity {
      * 사진을 찍기 위한 함수
      */
     private void takePicture() {
-        if (cameraDevice == null) {
-            return;
-        }
+        if (mCameraDevice == null) return;
+
         CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
         try {
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraDevice.getId());
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraDevice.getId());
             Size[] jpegSizes = null;
             if (characteristics != null) {
                 jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
@@ -555,10 +651,10 @@ public class MainActivity extends AppCompatActivity {
                 final ImageReader reader = ImageReader.newInstance(width, height, ImageFormat.JPEG, 1);
                 List<Surface> outputSurface = new ArrayList<>(2);
                 outputSurface.add(reader.getSurface());
-                outputSurface.add(new Surface(textureView.getSurfaceTexture()));
+                outputSurface.add(new Surface(mCameraPrview.getSurfaceTexture()));
 
                 // perview 를 위한 캡쳐 리퀘스트 생성
-                final CaptureRequest.Builder captureBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
+                final CaptureRequest.Builder captureBuilder = mCameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_STILL_CAPTURE);
                 captureBuilder.addTarget(reader.getSurface());
                 captureBuilder.set(CaptureRequest.CONTROL_MODE, CameraMetadata.CONTROL_MODE_AUTO);
 
@@ -612,12 +708,12 @@ public class MainActivity extends AppCompatActivity {
                     public void onCaptureCompleted(CameraCaptureSession session, CaptureRequest request, TotalCaptureResult result) {
                         super.onCaptureCompleted(session, request, result);
                         Toast.makeText(MainActivity.this, "saved" + file, Toast.LENGTH_SHORT).show();
-                        createCameraPreView();
+                        createCameraPreview();
                     }
                 };
 
                 // 카메라의 캡쳐 세션을 생성하기 위한 메소드
-                cameraDevice.createCaptureSession(outputSurface, new CameraCaptureSession.StateCallback() {
+                mCameraDevice.createCaptureSession(outputSurface, new CameraCaptureSession.StateCallback() {
                     @Override
                     public void onConfigured(CameraCaptureSession cameraCaptureSession) {
                         try {
@@ -641,85 +737,80 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
-     * 카메라의 프리뷰를 만드는 함수
-     * 해당 함수 안에서 updatePreview를 실행한다.
+     * onCreate 후에 동작 하는 함수
+     * 또한 애플리케이션이 최소화 되었다가 다시 킬 때도 실행된다.
+     * startBackgroundThread 함수에서 thread를 다시 시작한다.
      */
-    private void createCameraPreView() {
-        try {
-            // 캑쳐 세션을 만들기 전에 프리뷰를 위한 Subface를 준비
-            SurfaceTexture texture = textureView.getSurfaceTexture();
-            assert texture != null;
-            texture.setDefaultBufferSize(imageDimension.getWidth(), imageDimension.getHeight());
-            // 브리뷰를 위한 Subface 생성 > 이미지를 찍기 위해 사용
-            Surface surface = new Surface(texture);
+    @Override
+    protected void onResume() {
+        super.onResume();
 
-            // 캡쳐 세션을 생성하기 위해 아래의 메소드 호출
-            captureRequestBuilder = cameraDevice.createCaptureRequest(CameraDevice.TEMPLATE_PREVIEW);
-            captureRequestBuilder.addTarget(surface);
-            cameraDevice.createCaptureSession(Arrays.asList(surface), new CameraCaptureSession.StateCallback() {
-                @Override
-                public void onConfigured(CameraCaptureSession cameraCaptureSession) {
-                    if (cameraDevice == null) {
-                        return;
-                    }
-                    cameraCaptureSessions = cameraCaptureSession;
-                    // perview의 계속적인 업데이트를 해주는 함수실행
-                    updatePreview();
-                }
-
-                @Override
-                public void onConfigureFailed(CameraCaptureSession cameraCaptureSession) {
-                    Toast.makeText(MainActivity.this, "changed", Toast.LENGTH_SHORT).show();
-                }
-            }, null);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
-        }
-
-    }
-
-    /**
-     * 카메라 perview에 대한 계속적인 변경을 시켜주는 thread 를 실행하는 함수
-     * createCameraPreview 함수 안에서 실행된다.
-     */
-    private void updatePreview() {
-        if (cameraDevice == null) {
-            Toast.makeText(MainActivity.this, "ERROR", Toast.LENGTH_SHORT).show();
-        }
-        captureRequestBuilder.set(CaptureRequest.CONTROL_MODE, CaptureRequest.CONTROL_MODE_AUTO);
-        try {
-            cameraCaptureSessions.setRepeatingRequest(captureRequestBuilder.build(), null, mBackgroundHandler);
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
+        createCameraBackgroundThread();
+        if (mCameraPrview.isAvailable()) {
+            // 만약 textureView(카메라 화면)이 정상적으로 동작한다면 카메라를 정상 실행한다.
+            openCamera();
+        } else {
+            // 아니라면 카메라에 textureListener 를 통해 제대로 동작할 수 있도록 만들어 준다.
+            mCameraPrview.setSurfaceTextureListener(textureListener);
         }
     }
 
     /**
-     * 카메라를 열기 위한 함수
+     * 애플리케이션을 최소화하는 경우 일시정지하는 함수
+     * stopBackground 에서 처리한다.
      */
-    private void openCamera() {
-        if (!permissionHelper.checkPermission()) return;
+    @Override
+    protected void onPause() {
+        stopCameraBackgroundThread();
+        super.onPause();
+    }
 
-        // 카메라 목록, 특성, 모니터링 > 사용가능한 카메라를 관리하고 제공
-        CameraManager manager = (CameraManager) getSystemService(Context.CAMERA_SERVICE);
-        if (manager == null) {
-            Toast.makeText(this, "카메라 서비스를 찾을 수 없습니다.", Toast.LENGTH_SHORT).show();
-            return;
+    /**
+     * onResume 함수의 안에서 실행된다.
+     * 새로운 thread를 시작하여 카메라가 다시 켜지도록 한다.
+     */
+    private void createCameraBackgroundThread() {
+        // 새로운 thread를 만들고 loop를 시작한다.
+        if (mBackgroundThread == null) {
+            mBackgroundThread = new HandlerThread("Camera Background");
+            mBackgroundThread.start();
+
+            if (mBackgroundHandler == null) {
+                mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
+            }
         }
+    }
 
-        try {
-            cameraId = manager.getCameraIdList()[0];
-            // 카메라 특성 정보 > CameraDevice에 대한 메타데이터 제공
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
-            StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
-            assert map != null;
-            imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
-            // check realtime permission if run higher API 23
-            checkPermission();
-            manager.openCamera(cameraId, stateCallback, null);
+    /**
+     * onPause 함수가 필요한 상황이 나왔을 때 실행된다.
+     * 스레드의 loop를 멈춰 카메라를 일시정지하는 역할을 한다.
+     */
+    private void stopCameraBackgroundThread() {
+        // message queue에 쌓인 메시지 처리한 후 스레드의 loop를 중단한다.
+        if (mBackgroundThread != null) {
+            mBackgroundThread.quitSafely();
+            try {
+                // 스레드에 join 하여 Hanlder가 종료되기 까지 기다린다
+                mBackgroundThread.join();
+                mBackgroundThread = null;
+                mBackgroundHandler = null;
+            } catch (InterruptedException ignored) {
 
-        } catch (CameraAccessException e) {
-            e.printStackTrace();
+            }
+        }
+    }
+
+    /**
+     * 카메라 사용을 위한 사용자의 권한 허용받기위한 함수
+     * 만약 허용이 되지 않았다면 권한 허용에 대해 다시 물어본다.
+     */
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        // 리턴이 false라면 허용을 하지 않은 것. 그러면 여기서 권한을 허용하지 않을건지 다시 물어봄
+        if (!mPermissionHelper.permissionResult(requestCode, permissions, grantResults)) {
+            mPermissionHelper.requestPermissions();
+        } else {
+            openCamera();
         }
     }
 
@@ -744,78 +835,4 @@ public class MainActivity extends AppCompatActivity {
 
         }
     };
-
-    /**
-     * 애플리케이션을 다시 재개하는 기능의 함수
-     * 예를들면 애플리케이션의 최소화 되었다가 다시 킬 때 재개한다.
-     * startBackgroundThread 함수에서 thread를 다시 시작한다.
-     */
-    @Override
-    protected void onResume() {
-        super.onResume();
-        startBackgroundThread();
-        if (textureView.isAvailable()) {
-            // 만약 textureView(카메라 화면)이 정상적으로 동작한다면 카메라를 정상 실행한다.
-            openCamera();
-        } else {
-            // 아니라면 카메라에 textureLisener를 통해 제대로 동작할 수 있도록 만들어 준다.
-            textureView.setSurfaceTextureListener(textureListener);
-        }
-    }
-
-    /**
-     * 애플리케이션을 최소화하는 경우 일시정지하는 함수
-     * stopBackground 에서 처리한다.
-     */
-    @Override
-    protected void onPause() {
-        stopBackground();
-        super.onPause();
-    }
-
-    /**
-     * onPause 함수가 필요한 상황이 나왔을 때 실행된다.
-     * 스레드의 loop를 멈춰 일시정지하는 역할을 한다.
-     */
-    private void stopBackground() {
-        // message queue에 쌓인 메시지 처리한 후 스레드의 loop를 중단한다.
-        mBackgroundThread.quitSafely();
-        try {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
-
-        } catch (InterruptedException e) {
-            e.printStackTrace();
-        }
-    }
-
-    /**
-     * onResume 함수의 안에서 실행된다.
-     * 새로운 thread를 시작하여 카메라가 다시 켜지도록 한다.
-     */
-    private void startBackgroundThread() {
-        // 새로운 thread를 만들고 loop를 시작한다.
-        mBackgroundThread = new HandlerThread("Camera Background");
-        mBackgroundThread.start();
-        mBackgroundHandler = new Handler(mBackgroundThread.getLooper());
-    }
-
-    /**
-     * 카메라 사용을 위한 사용자의 권한 허용받기위한 함수
-     * 만약 허용이 되지 않았다면 권한 허용에 대해 다시 물어본다.
-     *
-     * @param requestCode
-     * @param permissions
-     * @param grantResults
-     */
-    @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
-        // 리턴이 false라면 허용을 하지 않은 것. 그러면 여기서 권한을 허용하지 않을건지 다시 물어봄
-        if (!permissionHelper.permissionResult(requestCode, permissions, grantResults)) {
-            permissionHelper.requestPermissions();
-        } else {
-            openCamera();
-        }
-    }
 }
