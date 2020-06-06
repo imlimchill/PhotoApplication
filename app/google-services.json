@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "735642389284",
+    "firebase_url": "https://mrphoto-7a99f.firebaseio.com",
+    "project_id": "mrphoto-7a99f",
+    "storage_bucket": "mrphoto-7a99f.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:735642389284:android:e68b3491daaaa03c5501b1",
+        "android_client_info": {
+          "package_name": "com.MrPhoto.photoapplication"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "735642389284-dbntnenef1if1it79mbo309ieib0rpob.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBj2jpxKJOCQOtkhVI_arDBR9wjPy2xGsg"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "735642389284-dbntnenef1if1it79mbo309ieib0rpob.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
