@@ -24,12 +24,22 @@
         app:layout_constraintBottom_toBottomOf="parent" />
 
     <!-- 카메라 화면 -->
-    <TextureView
+    <androidx.camera.view.PreviewView
         android:id="@+id/textureView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintTop_toTopOf="parent" />
+
+    <!-- 그래픽 오버레이 캔버스 그릴 오버레이 -->
+    <com.MrPhoto.photoapplication.graphic.GraphicOverlay
+        android:id="@+id/graphicOverlay"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:adjustViewBounds="true"
+        app:layout_constraintBottom_toBottomOf="parent"
+        app:layout_constraintTop_toTopOf="parent"
+        tools:ignore="ContentDescription" />
 
     <!-- 상단 버튼 -->
     <LinearLayout
@@ -49,15 +59,17 @@
             android:background="#00ff0000"
             android:drawableLeft="@drawable/setup" />
 
-        <Button
+        <ImageView
             android:id="@+id/ratioBtn"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
             android:layout_marginLeft="30dp"
             android:layout_marginRight="30dp"
             android:layout_weight="1"
+            android:adjustViewBounds="true"
             android:background="#00ff0000"
-            android:drawableLeft="@drawable/s34" />
+            android:src="@drawable/s43_2"
+            tools:ignore="ContentDescription" />
 
         <Button
             android:id="@+id/reverseBtn"
