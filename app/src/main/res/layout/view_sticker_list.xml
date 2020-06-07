@@ -34,7 +34,7 @@
                 tools:ignore="RtlSymmetry">
 
                 <ImageView
-                    android:id="@+id/noneBtn"
+                    android:id="@+id/btnStickerNone"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_marginEnd="5dp"
@@ -73,7 +73,7 @@
             app:alignItems="flex_start"
             app:flexDirection="row"
             app:flexWrap="wrap"
-            app:justifyContent="space_between" />
+            app:justifyContent="flex_start" />
 
     </ScrollView>
 

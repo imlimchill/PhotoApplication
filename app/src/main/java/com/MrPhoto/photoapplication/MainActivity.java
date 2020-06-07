@@ -147,12 +147,12 @@ public class MainActivity extends AppCompatActivity {
     private ImageAnalysis mImageAnalysisUseCase;
     private ImageCapture mImageCaptureUseCase;
 
+    private int mCurrentStickerResourceId;
     private FaceProcessing mFaceProcessing;
     private PreviewTransformation mPreviewTransformation;
 
     private File mOutputBaseDir;
 
-    // UI 드로잉 플래그
     private int mOrientation = 0;
 
     @Override
@@ -169,6 +169,7 @@ public class MainActivity extends AppCompatActivity {
         dp100 = Utils.dp2px(this, 100);
 
         mOutputBaseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
+        mCurrentStickerResourceId = 0;
 
         mScreenRatios = new ArrayList<>();
         mScreenRatios.add(ScreenRatio.S1_1);
@@ -255,6 +256,14 @@ public class MainActivity extends AppCompatActivity {
             LinearLayout.LayoutParams btnStickerButtonLayoutParams = new LinearLayout.LayoutParams(dp40, dp40);
             btnStickerButtonLayoutParams.setMarginEnd(dp12);
 
+            // 스티커 해제 버튼
+            View btnStickerNone = pnlStiker.findViewById(R.id.btnStickerNone);
+            btnStickerNone.setOnClickListener(v17 -> {
+                unBindAnalysisUseCase();
+                mCurrentStickerResourceId = 0;
+                graphicOverlay.clear();
+            });
+
             // 즐겨찾기 스티커 버튼
             ImageView btnFav = new ImageView(MainActivity.this);
             btnFav.setLayoutParams(btnStickerButtonLayoutParams);
@@ -262,6 +271,8 @@ public class MainActivity extends AppCompatActivity {
             btnFav.setAdjustViewBounds(true);
             btnFav.setImageResource(R.drawable.favorite);
             btnFav.setOnClickListener(v12 -> {
+                listStiker.removeAllViews();
+
                 // 스티커의 레이아웃 정의
                 FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
@@ -273,13 +284,15 @@ public class MainActivity extends AppCompatActivity {
 
             listStikerItems.addView(btnFav);
 
-            // 전체 스티커 추가
-            ImageView btnAll = new ImageView(MainActivity.this);
-            btnAll.setLayoutParams(btnStickerButtonLayoutParams);
-            btnAll.setPadding(dp4, dp4, dp4, dp4);
-            btnAll.setAdjustViewBounds(true);
-            btnAll.setImageResource(R.drawable.slist);
-            btnAll.setOnClickListener(v13 -> {
+            // 첫번째 스티커 리스트 추가
+            ImageView btnSticker1 = new ImageView(MainActivity.this);
+            btnSticker1.setLayoutParams(btnStickerButtonLayoutParams);
+            btnSticker1.setPadding(dp4, dp4, dp4, dp4);
+            btnSticker1.setAdjustViewBounds(true);
+            btnSticker1.setImageResource(R.drawable.slist);
+            btnSticker1.setOnClickListener(v13 -> {
+                listStiker.removeAllViews();
+
                 FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
@@ -289,12 +302,45 @@ public class MainActivity extends AppCompatActivity {
                 addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
                 addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
                 addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
             });
 
-            listStikerItems.addView(btnAll);
+            listStikerItems.addView(btnSticker1);
 
-            // 기본으로 전체를 먼저 자동으로 클릭
-            btnAll.performClick();
+            // 첫번째 스티커 리스트 추가
+            ImageView sDoraemong = new ImageView(MainActivity.this);
+            sDoraemong.setLayoutParams(btnStickerButtonLayoutParams);
+            sDoraemong.setPadding(dp4, dp4, dp4, dp4);
+            sDoraemong.setAdjustViewBounds(true);
+            sDoraemong.setImageResource(R.drawable.s_do);
+            sDoraemong.setOnClickListener(v15 -> {
+                listStiker.removeAllViews();
+
+                FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
+                stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
+
+                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_1);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_2);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_3);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_4);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_5);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_6);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_7);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_8);
+            });
+
+            listStikerItems.addView(sDoraemong);
+
+            // 기본으로 첫번째 스티커 를 먼저 자동으로 클릭
+            btnSticker1.performClick();
         });
         // endregion
 
@@ -476,18 +522,21 @@ public class MainActivity extends AppCompatActivity {
      * 스티커 리스트를 클릭 한 경우 동적으로 스티커 추가
      */
     public void addSticker(FlexboxLayout.LayoutParams stickerLayoutParams, FlexboxLayout listSticker, @DrawableRes int resId) {
+        int width = pnlMain.getMeasuredWidth() - Utils.dp2px(this, 24);
+        int imgSize = width / 4 - Utils.dp2px(this, 8);
+
+        stickerLayoutParams.width = imgSize;
+        stickerLayoutParams.height = imgSize;
+
         ImageView sticker = new ImageView(MainActivity.this);
         sticker.setLayoutParams(stickerLayoutParams);
         sticker.setPadding(dp4, dp4, dp4, dp4);
         sticker.setAdjustViewBounds(true);
         sticker.setImageResource(resId);
-        sticker.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "스티커 클릭 되었어요.", Toast.LENGTH_SHORT).show();
-            }
+        sticker.setOnClickListener(v -> {
+            if (mImageAnalysisUseCase == null) bindAnalysisUseCase();
+            mCurrentStickerResourceId = resId;
         });
-
         listSticker.addView(sticker);
     }
 
@@ -590,7 +639,6 @@ public class MainActivity extends AppCompatActivity {
         mCameraProvider.unbindAll();
 
         bindPreviewUseCase();
-        bindAnalysisUseCase();
         bindImageCaptureUseCase();
     }
 
@@ -637,6 +685,21 @@ public class MainActivity extends AppCompatActivity {
                 imageProxy -> mFaceProcessing.processImageProxy(imageProxy));
 
         mCameraProvider.bindToLifecycle(this, mCameraSelector, mImageAnalysisUseCase);
+    }
+
+    /**
+     * 카메라 프리뷰의 이미지 분석 UseCase 를 Unbinding
+     */
+    private void unBindAnalysisUseCase() {
+        if (mImageAnalysisUseCase != null) {
+            mCameraProvider.unbind(mImageAnalysisUseCase);
+            mImageAnalysisUseCase = null;
+        }
+
+        if (mFaceProcessing != null) {
+            mFaceProcessing.stop();
+            mFaceProcessing = null;
+        }
     }
 
     /**
@@ -778,8 +841,10 @@ public class MainActivity extends AppCompatActivity {
             graphicOverlay.setRatio(mPreviewTransformation.getXRatio(), mPreviewTransformation.getYRatio());
         }
 
+        if (mCurrentStickerResourceId == 0) return;
+
         for (Face face : faces) {
-            Bitmap sticker = BitmapFactory.decodeResource(getResources(), R.drawable.photo);
+            Bitmap sticker = BitmapFactory.decodeResource(getResources(), mCurrentStickerResourceId);
             graphicOverlay.add(new FaceGraphic(graphicOverlay, face, sticker));
         }
     }
