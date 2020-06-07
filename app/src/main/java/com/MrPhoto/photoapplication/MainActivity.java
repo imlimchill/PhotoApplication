@@ -2,6 +2,7 @@ package com.MrPhoto.photoapplication;
 
 import android.content.Context;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.graphics.Color;
 import android.graphics.ImageFormat;
 import android.graphics.SurfaceTexture;
@@ -16,6 +17,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
 import android.os.Environment;
@@ -293,6 +295,7 @@ public class MainActivity extends AppCompatActivity {
                 // 기본으로 전체를 먼저 자동으로 클릭
                 btnAll.performClick();
             }
+
         });
 
         // 필터 버튼 클릭 시
@@ -407,7 +410,8 @@ public class MainActivity extends AppCompatActivity {
 
         // 카메라 권한을 확인하기 위한 코드 실행
         checkPermission();
-    }
+
+    } //end onCreate
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
@@ -544,6 +548,8 @@ public class MainActivity extends AppCompatActivity {
             if (characteristics != null) {
                 jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
 
+
+
                 // 이미지의 사이즈 결정
                 int width = 640;
                 int height = 480;
@@ -567,7 +573,9 @@ public class MainActivity extends AppCompatActivity {
                 captureBuilder.set(CaptureRequest.JPEG_ORIENTATION, ORIENTATIONS.get(rotation));
 
                 // 저장을 위한 파일 생성과 파일 지정
-                file = new File(Environment.getExternalStorageDirectory() + "/" + UUID.randomUUID().toString() + ".jpg");
+                File folder = getCreateFolder();
+                file = new File(folder + "/" + UUID.randomUUID().toString() + ".jpg");
+
                 ImageReader.OnImageAvailableListener readerListener = new ImageReader.OnImageAvailableListener() {
                     @Override
                     public void onImageAvailable(ImageReader imageReader) {
@@ -603,6 +611,9 @@ public class MainActivity extends AppCompatActivity {
                                 outputStream.close();
                             }
                         }
+
+                        // 저장한 파일을 실제 갤러리에 넣을 수 았게 하는 기능
+                        sendBroadcast(new Intent( Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(file)) );
                     }
                 };
 
@@ -638,6 +649,28 @@ public class MainActivity extends AppCompatActivity {
         } catch (CameraAccessException e) {
             e.printStackTrace();
         }
+    }
+
+    /**
+     * 핸드폰에 폴더가 존재하는지 존재하지 않은 지를 확인한 후
+     * 존재하지 않음 : 파일 생성 후 경로 반환
+     * 존재함      : 경로 반환
+     * @return 만들어진 폴더의 경로 반환
+     */
+    private File getCreateFolder() {
+
+        // 새로만들 폴더의 경로와 이름 설정
+        String filePath = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES) + File.separator + "MrPhoto" + File.separator;
+        File dir = null;
+        if (Environment.getExternalStorageState().equals(Environment.MEDIA_MOUNTED)) {
+            dir = new File(filePath);
+            // 파일의 유무 판단
+            if (!dir.exists()) {
+                dir.mkdirs();
+            }
+        }
+
+      return dir;
     }
 
     /**
