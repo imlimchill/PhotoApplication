@@ -17,6 +17,7 @@ import android.hardware.camera2.TotalCaptureResult;
 import android.hardware.camera2.params.StreamConfigurationMap;
 import android.media.Image;
 import android.media.ImageReader;
+import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -163,6 +164,8 @@ public class MainActivity extends AppCompatActivity {
     // 사진 저장을 위해 선언
     private File file;
     private boolean mFlashSupported;
+    // 카메라의 소리음을 설정하기 위한 필드 > 기본값: true(소리)
+    private boolean mSound = true;
     // 카메라와 후면, 전면 화면을 결정하는 필드
     private String mCameraId = "0";
     private Handler mBackgroundHandler;
@@ -404,8 +407,24 @@ public class MainActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 takePicture();
+                if (mSound == true) {
+                    MediaActionSound sound = new MediaActionSound();
+                    sound.play(MediaActionSound.SHUTTER_CLICK);
+                }
             }
         });
+
+//        // 음소거 버튼을 클릭 시 사진 촬영음을 음소거 또는 음소거 해제하는 기능 구현
+//        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (mSound == true) {
+//                    mSound = false;
+//                } else {
+//                    mSound = true;
+//                }
+//            }
+//        });
 
         // endregion
 
@@ -568,8 +587,6 @@ public class MainActivity extends AppCompatActivity {
             Size[] jpegSizes = null;
             if (characteristics != null) {
                 jpegSizes = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP).getOutputSizes(ImageFormat.JPEG);
-
-
 
                 // 이미지의 사이즈 결정
                 int width = 640;
