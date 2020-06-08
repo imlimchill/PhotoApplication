@@ -53,6 +53,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.Semaphore;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -162,6 +163,8 @@ public class MainActivity extends AppCompatActivity {
     // 사진 저장을 위해 선언
     private File file;
     private boolean mFlashSupported;
+    // 카메라와 후면, 전면 화면을 결정하는 필드
+    private String mCameraId = "0";
     private Handler mBackgroundHandler;
     private HandlerThread mBackgroundThread;
 
@@ -379,6 +382,23 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
+        // 화면 전환 버튼을 누르면 화면이 전환 기능 실행
+        reverseBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                onPause();
+                if (mCameraId.equals("1")) {
+                    // 0: 후면으로 변경
+                    mCameraId = "0";
+                } else {
+                    // 1: 전면으로 변경
+                    mCameraId = "1";
+                }
+                openCamera();
+            }
+        });
+
         // 사진 버튼을 누르면 사진 찍는 기능 구현
         photoBtn.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -410,6 +430,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 카메라 권한을 확인하기 위한 코드 실행
         checkPermission();
+
 
     } //end onCreate
 
@@ -743,13 +764,15 @@ public class MainActivity extends AppCompatActivity {
         try {
             cameraId = manager.getCameraIdList()[0];
             // 카메라 특성 정보 > CameraDevice에 대한 메타데이터 제공
-            CameraCharacteristics characteristics = manager.getCameraCharacteristics(cameraId);
+
+            CameraCharacteristics characteristics = manager.getCameraCharacteristics(mCameraId);
             StreamConfigurationMap map = characteristics.get(CameraCharacteristics.SCALER_STREAM_CONFIGURATION_MAP);
             assert map != null;
             imageDimension = map.getOutputSizes(SurfaceTexture.class)[0];
             // check realtime permission if run higher API 23
             checkPermission();
-            manager.openCamera(cameraId, stateCallback, null);
+
+            manager.openCamera(mCameraId, stateCallback, null);
 
         } catch (CameraAccessException e) {
             e.printStackTrace();
@@ -796,30 +819,27 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    private Semaphore mCameraOpenCloseLock = new Semaphore(1);
+
     /**
      * 애플리케이션을 최소화하는 경우 일시정지하는 함수
-     * stopBackground 에서 처리한다.
+     * cameraDevice를 닫는다.
      */
     @Override
     protected void onPause() {
-        stopBackground();
         super.onPause();
-    }
 
-    /**
-     * onPause 함수가 필요한 상황이 나왔을 때 실행된다.
-     * 스레드의 loop를 멈춰 일시정지하는 역할을 한다.
-     */
-    private void stopBackground() {
-        // message queue에 쌓인 메시지 처리한 후 스레드의 loop를 중단한다.
-        mBackgroundThread.quitSafely();
+        //
         try {
-            mBackgroundThread.join();
-            mBackgroundThread = null;
-            mBackgroundHandler = null;
-
+            mCameraOpenCloseLock.acquire();
+            if (null != cameraDevice) {
+                cameraDevice.close();
+                cameraDevice = null;
+            }
         } catch (InterruptedException e) {
             e.printStackTrace();
+        } finally {
+            mCameraOpenCloseLock.release();
         }
     }
 
