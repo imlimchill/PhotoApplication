@@ -1,7 +1,6 @@
 package com.MrPhoto.photoapplication;
 
 import android.content.ContentValues;
-import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
@@ -23,6 +22,7 @@ import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
@@ -43,7 +43,6 @@ import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 
 import java.io.File;
-import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -744,12 +743,13 @@ public class MainActivity extends AppCompatActivity {
      * Android Q 이상일 때의 사진 촬영
      */
     private void takePictureOverAndroidQ(String imageFileName) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
+
         ContentValues contentValues = new ContentValues();
         contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, imageFileName);
         contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            contentValues.put(MediaStore.Images.Media.IS_PENDING, 1);
+        contentValues.put(MediaStore.Images.Media.IS_PENDING, 1);
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/MrPhoto");
 
         ImageCapture.Metadata metaData = new ImageCapture.Metadata();
 
@@ -758,16 +758,16 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         mImageCaptureUseCase.takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
+            @RequiresApi(api = Build.VERSION_CODES.Q)
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
                 Uri savedUri = outputFileResults.getSavedUri();
                 if (savedUri == null) return;
 
-                // 갤러리에 새로운 사진이 업데이트 되었다고 통보
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Intent intent = new Intent(android.hardware.Camera.ACTION_NEW_PICTURE, savedUri);
-                    sendBroadcast(intent);
-                }
+                // 사진 저장이 완료되었다고 resolver 에게 통보
+                contentValues.clear();
+                contentValues.put(MediaStore.Images.Media.IS_PENDING, 0);
+                getContentResolver().update(savedUri, contentValues, null, null);
 
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 찍었습니다.", Toast.LENGTH_SHORT).show());
             }
@@ -783,42 +783,7 @@ public class MainActivity extends AppCompatActivity {
      * Android Q 미만일 때의 사진 촬영
      */
     private void takePictureUnderAndroidQ(String imageFileName) {
-
-        File imageFile = new File(getOutputDirectory(), imageFileName);
-
-        try {
-            if (!imageFile.createNewFile()) throw new IOException("파일 생성에 실패 했습니다.");
-        } catch (IOException e) {
-            Log.w(TAG, e.getMessage(), e);
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-
-        ImageCapture.Metadata metaData = new ImageCapture.Metadata();
-
-        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile)
-                .setMetadata(metaData)
-                .build();
-
-        mImageCaptureUseCase.takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
-            @Override
-            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-                Uri savedUri = outputFileResults.getSavedUri();
-                if (savedUri == null) return;
-
-                // 갤러리에 새로운 사진이 업데이트 되었다고 통보
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Intent intent = new Intent(android.hardware.Camera.ACTION_NEW_PICTURE, savedUri);
-                    sendBroadcast(intent);
-                }
-
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 찍었습니다.", Toast.LENGTH_SHORT).show());
-            }
-
-            @Override
-            public void onError(@NonNull ImageCaptureException exception) {
-                Log.w(TAG, exception.getMessage(), exception);
-            }
-        });
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return;
     }
 
     private void drawFaces(List<Face> faces, InputImage inputImage, Bitmap originalCameraImage) {
