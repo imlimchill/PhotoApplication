@@ -201,6 +201,17 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 이벤트 리스너 등록 ]
 
+        // region [ 설정 버튼 클릭시]
+
+        Button settingBtn = (Button) findViewById(R.id.settingBtn);
+        settingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(),PopActivity.class);
+                startActivity(intent);
+            }
+        });
+
         // region [ 비율 버튼 클릭 시 ]
         rationBtn.setOnClickListener(v -> {
             ScreenRatio curScreenRatio = mScreenRatio;
