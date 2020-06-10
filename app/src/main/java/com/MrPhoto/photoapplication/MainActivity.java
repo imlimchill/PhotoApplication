@@ -55,6 +55,8 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
+import java.util.Timer;
+import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -135,6 +137,8 @@ public class MainActivity extends AppCompatActivity {
      * 플래시 판단 필드
      */
     int flashMode = ImageCapture.FLASH_MODE_OFF;
+    /** 타이머 시간 설정 필드 */
+    int time = 0;
     /**
      * 필터 버튼
      */
@@ -450,11 +454,18 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 사진 버튼 클릭 시 ]
         photoBtn.setOnClickListener(v -> {
-            takePicture();
-            if (isMute) {
-                MediaActionSound sound = new MediaActionSound();
-                sound.play(MediaActionSound.SHUTTER_CLICK);
-            }
+            Timer timer = new Timer();
+            TimerTask timerTask = new TimerTask() {
+                @Override
+                public void run() {
+                    takePicture();
+                    if (isMute) {
+                        MediaActionSound sound = new MediaActionSound();
+                        sound.play(MediaActionSound.SHUTTER_CLICK);
+                    }
+                }
+            };
+            timer.schedule(timerTask, time);
         });
 
         //        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
@@ -478,6 +489,22 @@ public class MainActivity extends AppCompatActivity {
         //                    flashMode = ImageCapture.FLASH_MODE_OFF;
         //                }
         //                openCamera();
+        //            }
+        //        });
+
+        //        // 타이머 클릭 시 time의 시간 후에 사진 촬영 기능을 수행한다.
+        //        (타이머버튼).setOnClickListener(new View.OnClickListener() {
+        //            @Override
+        //            public void onClick(View view) {
+        //                if (time == 0) {
+        //                    time = 3000;
+        //                } else if (time == 3000) {
+        //                    time = 5000;
+        //                } else if (time == 5000) {
+        //                    time = 7000;
+        //                } else {
+        //                    time = 0;
+        //                }
         //            }
         //        });
 
