@@ -182,11 +182,12 @@ public class MainActivity extends AppCompatActivity {
         mScreenRatios.add(ScreenRatio.S4_3);
         mScreenRatios.add(ScreenRatio.S16_9);
 
-        if (savedInstanceState != null) {
+        if (savedInstanceState != null)
             mLensFacing = savedInstanceState.getInt(STATE_LENS_FACING, CameraSelector.LENS_FACING_BACK);
-        }
 
-        mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
+        mCameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(mLensFacing)
+                .build();
 
         pnlMain = findViewById(R.id.pnlMain);
         pnlTop = findViewById(R.id.pnlTop);
@@ -231,8 +232,25 @@ public class MainActivity extends AppCompatActivity {
 
             mScreenRatio = mScreenRatios.get(nextIndex);
             mPreviewTransformation = null;
+
             onWindowFocusChanged(true);
         });
+        // endregion
+
+        // region [ 카메라 전환 버튼 클릭 시 ]
+
+        reverseBtn.setOnClickListener(v -> {
+            mLensFacing = mLensFacing == CameraSelector.LENS_FACING_BACK ? CameraSelector.LENS_FACING_FRONT : CameraSelector.LENS_FACING_BACK;
+            unBindAllUseCases();
+
+            mCameraSelector = new CameraSelector.Builder()
+                    .requireLensFacing(mLensFacing)
+                    .build();
+
+            bindAllCameraUseCases();
+            if (graphicOverlay != null) graphicOverlay.clear();
+        });
+
         // endregion
 
         // region [ 스티커 버튼 클릭 시 ]
@@ -641,8 +659,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void bindAllCameraUseCases() {
         Log.d(TAG, "bindAllCameraUseCases()");
-        if (mCameraProvider == null) return;
-        mCameraProvider.unbindAll();
+        unBindAllUseCases();
 
         bindPreviewUseCase();
         bindImageCaptureUseCase();
@@ -723,6 +740,28 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         mCameraProvider.bindToLifecycle(this, mCameraSelector, mImageCaptureUseCase);
+    }
+
+    /**
+     * 카메라의 UseCases 바인딩
+     */
+    private void unBindAllUseCases() {
+        Log.d(TAG, "unBindAllUseCases()");
+        if (mCameraProvider == null) return;
+        mCameraProvider.unbindAll();
+
+        if (mPreviewUseCase != null) mPreviewUseCase = null;
+        if (mImageAnalysisUseCase != null) mImageAnalysisUseCase = null;
+        if (mImageCaptureUseCase != null) mImageCaptureUseCase = null;
+
+        if (mFaceProcessing != null) {
+            mFaceProcessing.stop();
+            mFaceProcessing = null;
+        }
+
+        if (graphicOverlay != null) {
+            graphicOverlay.clear();
+        }
     }
 
     /**
