@@ -7,6 +7,7 @@ import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
 import android.media.Image;
+import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -128,6 +129,14 @@ public class MainActivity extends AppCompatActivity {
      */
     private View photoBtn;
     /**
+     * 음소거 판단 필드
+     */
+    boolean isMute = true;
+    /**
+     * 플래시 판단 필드
+     */
+    int flashMode = ImageCapture.FLASH_MODE_OFF;
+    /**
      * 필터 버튼
      */
     private View filterBtn;
@@ -185,10 +194,6 @@ public class MainActivity extends AppCompatActivity {
         if (savedInstanceState != null)
             mLensFacing = savedInstanceState.getInt(STATE_LENS_FACING, CameraSelector.LENS_FACING_BACK);
 
-        mCameraSelector = new CameraSelector.Builder()
-                .requireLensFacing(mLensFacing)
-                .build();
-
         pnlMain = findViewById(R.id.pnlMain);
         pnlTop = findViewById(R.id.pnlTop);
         pnlBottom = findViewById(R.id.pnlBottom);
@@ -207,6 +212,17 @@ public class MainActivity extends AppCompatActivity {
         // endregion
 
         // region [ 이벤트 리스너 등록 ]
+
+        // region [ 설정 버튼 클릭시 ]
+
+        Button settingBtn = (Button) findViewById(R.id.settingBtn);
+        settingBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                Intent intent = new Intent(getApplicationContext(),PopActivity.class);
+                startActivity(intent);
+            }
+        });
 
         // region [ 비율 버튼 클릭 시 ]
         rationBtn.setOnClickListener(v -> {
@@ -235,22 +251,6 @@ public class MainActivity extends AppCompatActivity {
 
             onWindowFocusChanged(true);
         });
-        // endregion
-
-        // region [ 카메라 전환 버튼 클릭 시 ]
-
-        reverseBtn.setOnClickListener(v -> {
-            mLensFacing = mLensFacing == CameraSelector.LENS_FACING_BACK ? CameraSelector.LENS_FACING_FRONT : CameraSelector.LENS_FACING_BACK;
-            unBindAllUseCases();
-
-            mCameraSelector = new CameraSelector.Builder()
-                    .requireLensFacing(mLensFacing)
-                    .build();
-
-            bindAllCameraUseCases();
-            if (graphicOverlay != null) graphicOverlay.clear();
-        });
-
         // endregion
 
         // region [ 스티커 버튼 클릭 시 ]
@@ -436,10 +436,61 @@ public class MainActivity extends AppCompatActivity {
         // endregion
 
         // region [ 사진 버튼 클릭 시 ]
-        photoBtn.setOnClickListener(v -> takePicture());
+        photoBtn.setOnClickListener(v -> {
+            takePicture();
+            if (isMute == true) {
+                MediaActionSound sound = new MediaActionSound();
+                sound.play(MediaActionSound.SHUTTER_CLICK);
+            }
+        });
+
+//        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (isMute == true) {
+//                    isMute = false;
+//                } else {
+//                    isMute = true;
+//                }
+//            }
+//        });
+
+//        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
+//        (플래시버튼).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (flashMode == ImageCapture.FLASH_MODE_OFF) {
+//                    flashMode = ImageCapture.FLASH_MODE_ON;
+//                } else {
+//                    flashMode = ImageCapture.FLASH_MODE_OFF;
+//                }
+//                openCamera();
+//            }
+//        });
         // endregion
 
         // endregion
+
+        // 화면 전환 버튼 클릭시 실행
+        reverseBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 클릭 시 화면 FRONT > BACK / BACK > FRONT
+                if (mLensFacing == CameraSelector.LENS_FACING_FRONT) {
+                    mLensFacing = CameraSelector.LENS_FACING_BACK;
+                } else {
+                    mLensFacing = CameraSelector.LENS_FACING_FRONT;
+                }
+                // 새로운 mLensFacing 값을 mCameraSelector 에 넣는다.
+                mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
+
+                // UseCases reload
+                bindAllCameraUseCases();
+
+                // GraphicOverlay clear
+                if (graphicOverlay != null) graphicOverlay.clear();
+            }
+        });
 
         // 카메라 권한을 확인하기 위한 코드 실행
         checkPermission();
@@ -737,6 +788,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTargetResolution(mPreviewSize)
                 .setTargetAspectRatioCustom(mAspectRatio)
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                .setFlashMode(flashMode)
                 .build();
 
         mCameraProvider.bindToLifecycle(this, mCameraSelector, mImageCaptureUseCase);
