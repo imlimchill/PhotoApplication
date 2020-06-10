@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -121,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
      * 촬영 버튼
      */
     private View photoBtn;
+    /** 음소거 판단 필드 */
+    boolean isMute = true;
     /**
      * 필터 버튼
      */
@@ -423,7 +426,24 @@ public class MainActivity extends AppCompatActivity {
         // endregion
 
         // region [ 사진 버튼 클릭 시 ]
-        photoBtn.setOnClickListener(v -> takePicture());
+        photoBtn.setOnClickListener(v -> {
+            takePicture();
+            if (isMute == true) {
+                MediaActionSound sound = new MediaActionSound();
+                sound.play(MediaActionSound.SHUTTER_CLICK);
+            }
+        });
+
+//        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (isMute == true) {
+//                    isMute = false;
+//                } else {
+//                    isMute = true;
+//                }
+//            }
+//        });
         // endregion
 
         // endregion
