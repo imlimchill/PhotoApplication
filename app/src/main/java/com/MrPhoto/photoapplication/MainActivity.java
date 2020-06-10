@@ -19,7 +19,6 @@ import android.util.Size;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
@@ -72,7 +71,7 @@ public class MainActivity extends AppCompatActivity {
     private int dp4;
     private int dp40;
     private int dp12;
-    private int dp100;
+
     private List<ScreenRatio> mScreenRatios;
     private ScreenRatio mScreenRatio = ScreenRatio.S4_3;
 
@@ -111,7 +110,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 설정 창 버튼
      */
-    private Button settingBtn;
+    private View settingBtn;
     /**
      * 화면 비율 변환 버튼
      */
@@ -119,7 +118,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 정방향, 후방향 화면 전환 버튼
      */
-    private Button reverseBtn;
+    private View reverseBtn;
     /**
      * 스티커 버튼
      */
@@ -181,7 +180,6 @@ public class MainActivity extends AppCompatActivity {
         dp4 = Utils.dp2px(this, 4);
         dp12 = Utils.dp2px(this, 12);
         dp40 = Utils.dp2px(this, 40);
-        dp100 = Utils.dp2px(this, 100);
 
         mOutputBaseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         mCurrentStickerResourceId = 0;
@@ -213,16 +211,12 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 이벤트 리스너 등록 ]
 
-        // region [ 설정 버튼 클릭시 ]
-
-        Button settingBtn = (Button) findViewById(R.id.settingBtn);
-        settingBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(),PopActivity.class);
-                startActivity(intent);
-            }
+        // region [ 설정 버튼 클릭 시 ]
+        settingBtn.setOnClickListener(view -> {
+            Intent intent = new Intent(getApplicationContext(), PopActivity.class);
+            startActivity(intent);
         });
+        // endregion
 
         // region [ 비율 버튼 클릭 시 ]
         rationBtn.setOnClickListener(v -> {
@@ -250,6 +244,25 @@ public class MainActivity extends AppCompatActivity {
             mPreviewTransformation = null;
 
             onWindowFocusChanged(true);
+        });
+        // endregion
+
+        // region [ 화면 전환 버튼 클릭 시 ]
+        reverseBtn.setOnClickListener(view -> {
+            // 클릭 시 화면 FRONT > BACK / BACK > FRONT
+            if (mLensFacing == CameraSelector.LENS_FACING_FRONT) {
+                mLensFacing = CameraSelector.LENS_FACING_BACK;
+            } else {
+                mLensFacing = CameraSelector.LENS_FACING_FRONT;
+            }
+            // 새로운 mLensFacing 값을 mCameraSelector 에 넣는다.
+            mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
+
+            // UseCases reload
+            bindAllCameraUseCases();
+
+            // GraphicOverlay clear
+            if (graphicOverlay != null) graphicOverlay.clear();
         });
         // endregion
 
@@ -438,59 +451,39 @@ public class MainActivity extends AppCompatActivity {
         // region [ 사진 버튼 클릭 시 ]
         photoBtn.setOnClickListener(v -> {
             takePicture();
-            if (isMute == true) {
+            if (isMute) {
                 MediaActionSound sound = new MediaActionSound();
                 sound.play(MediaActionSound.SHUTTER_CLICK);
             }
         });
 
-//        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (isMute == true) {
-//                    isMute = false;
-//                } else {
-//                    isMute = true;
-//                }
-//            }
-//        });
+        //        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
+        //            @Override
+        //            public void onClick(View view) {
+        //                if (isMute == true) {
+        //                    isMute = false;
+        //                } else {
+        //                    isMute = true;
+        //                }
+        //            }
+        //        });
 
-//        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
-//        (플래시버튼).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (flashMode == ImageCapture.FLASH_MODE_OFF) {
-//                    flashMode = ImageCapture.FLASH_MODE_ON;
-//                } else {
-//                    flashMode = ImageCapture.FLASH_MODE_OFF;
-//                }
-//                openCamera();
-//            }
-//        });
+        //        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
+        //        (플래시버튼).setOnClickListener(new View.OnClickListener() {
+        //            @Override
+        //            public void onClick(View view) {
+        //                if (flashMode == ImageCapture.FLASH_MODE_OFF) {
+        //                    flashMode = ImageCapture.FLASH_MODE_ON;
+        //                } else {
+        //                    flashMode = ImageCapture.FLASH_MODE_OFF;
+        //                }
+        //                openCamera();
+        //            }
+        //        });
+
         // endregion
 
         // endregion
-
-        // 화면 전환 버튼 클릭시 실행
-        reverseBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // 클릭 시 화면 FRONT > BACK / BACK > FRONT
-                if (mLensFacing == CameraSelector.LENS_FACING_FRONT) {
-                    mLensFacing = CameraSelector.LENS_FACING_BACK;
-                } else {
-                    mLensFacing = CameraSelector.LENS_FACING_FRONT;
-                }
-                // 새로운 mLensFacing 값을 mCameraSelector 에 넣는다.
-                mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
-
-                // UseCases reload
-                bindAllCameraUseCases();
-
-                // GraphicOverlay clear
-                if (graphicOverlay != null) graphicOverlay.clear();
-            }
-        });
 
         // 카메라 권한을 확인하기 위한 코드 실행
         checkPermission();
@@ -624,12 +617,7 @@ public class MainActivity extends AppCompatActivity {
         filter.setPadding(dp4, dp4, dp4, dp4);
         filter.setAdjustViewBounds(true);
         filter.setImageResource(resId);
-        filter.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "필터 클릭 되었어요.", Toast.LENGTH_SHORT).show();
-            }
-        });
+        filter.setOnClickListener(v -> Toast.makeText(MainActivity.this, "필터 클릭 되었어요.", Toast.LENGTH_SHORT).show());
 
         listFilter.addView(filter);
     }
@@ -929,6 +917,9 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
+    /**
+     * 인식한 얼굴을 그릴 때 사용하는 함수
+     */
     private void drawFaces(List<Face> faces, InputImage inputImage, Bitmap originalCameraImage) {
         graphicOverlay.clear();
 
@@ -957,9 +948,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 프리뷰의 비율과 이미지의 비율을 계산하는 클래스
+     */
     public static class PreviewTransformation {
-        float xRatio = 0.0f;
-        float yRatio = 0.0f;
+        float xRatio;
+        float yRatio;
 
         public PreviewTransformation(Size viewSize, Size imageSize, int rotationDegree) {
             if (rotationDegree == 0 || rotationDegree == 180) {
@@ -980,6 +974,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 사진 저장 폴더 설정
+     */
     private File getOutputDirectory() {
         File outputDir = new File(mOutputBaseDir, "MrPhoto");
         if (!outputDir.exists()) if (!outputDir.mkdirs()) return getFilesDir();
