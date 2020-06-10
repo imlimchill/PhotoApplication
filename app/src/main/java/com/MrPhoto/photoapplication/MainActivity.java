@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 음소거 판단 필드
      */
-    boolean isMute = true;
+    boolean isMute = false;
     /**
      * 플래시 판단 필드
      */
@@ -460,11 +460,14 @@ public class MainActivity extends AppCompatActivity {
             TimerTask timerTask = new TimerTask() {
                 @Override
                 public void run() {
+                    new Thread(() -> {
+                        if (!isMute) {
+                            MediaActionSound sound = new MediaActionSound();
+                            sound.play(MediaActionSound.SHUTTER_CLICK);
+                        }
+                    }).start();
+
                     takePicture();
-                    if (isMute) {
-                        MediaActionSound sound = new MediaActionSound();
-                        sound.play(MediaActionSound.SHUTTER_CLICK);
-                    }
                 }
             };
             timer.schedule(timerTask, time);
