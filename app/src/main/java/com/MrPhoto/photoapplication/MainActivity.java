@@ -5,6 +5,7 @@ import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -121,6 +122,8 @@ public class MainActivity extends AppCompatActivity {
      * 촬영 버튼
      */
     private View photoBtn;
+    /** 음소거 판단 필드 */
+    boolean isMute = true;
     /**
      * 필터 버튼
      */
@@ -177,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
         mScreenRatios.add(ScreenRatio.S16_9);
 
         if (savedInstanceState != null) {
-            mLensFacing = savedInstanceState.getInt(STATE_LENS_FACING, CameraSelector.LENS_FACING_BACK);
+                mLensFacing = savedInstanceState.getInt(STATE_LENS_FACING, CameraSelector.LENS_FACING_BACK);
         }
 
         mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
@@ -423,10 +426,44 @@ public class MainActivity extends AppCompatActivity {
         // endregion
 
         // region [ 사진 버튼 클릭 시 ]
-        photoBtn.setOnClickListener(v -> takePicture());
+        photoBtn.setOnClickListener(v -> {
+            takePicture();
+            if (isMute == true) {
+                MediaActionSound sound = new MediaActionSound();
+                sound.play(MediaActionSound.SHUTTER_CLICK);
+            }
+        });
+
+//        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (isMute == true) {
+//                    isMute = false;
+//                } else {
+//                    isMute = true;
+//                }
+//            }
+//        });
         // endregion
 
         // endregion
+
+        // 화면 전환 버튼 클릭시 실행
+        reverseBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                // 클릭 시 화면 FRONT > BACK / BACK > FRONT
+                if (mLensFacing == CameraSelector.LENS_FACING_FRONT) {
+                    mLensFacing = CameraSelector.LENS_FACING_BACK;
+                } else {
+                    mLensFacing = CameraSelector.LENS_FACING_FRONT;
+                }
+                // 새로운 mLensFacing 값을 mCameraSelector 에 넣는다.
+                mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
+                // 값으로 새롭게 카메라를 연다.
+                openCamera();
+            }
+        });
 
         // 카메라 권한을 확인하기 위한 코드 실행
         checkPermission();
