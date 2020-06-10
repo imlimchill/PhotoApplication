@@ -1,10 +1,12 @@
 package com.MrPhoto.photoapplication;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.Image;
 import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Build;
@@ -17,18 +19,19 @@ import android.util.Size;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
-import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
+import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -44,7 +47,9 @@ import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -68,7 +73,7 @@ public class MainActivity extends AppCompatActivity {
     private int dp4;
     private int dp40;
     private int dp12;
-    private int dp100;
+
     private List<ScreenRatio> mScreenRatios;
     private ScreenRatio mScreenRatio = ScreenRatio.S4_3;
 
@@ -107,7 +112,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 설정 창 버튼
      */
-    private Button settingBtn;
+    private View settingBtn;
     /**
      * 화면 비율 변환 버튼
      */
@@ -115,7 +120,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 정방향, 후방향 화면 전환 버튼
      */
-    private Button reverseBtn;
+    private View reverseBtn;
     /**
      * 스티커 버튼
      */
@@ -124,11 +129,17 @@ public class MainActivity extends AppCompatActivity {
      * 촬영 버튼
      */
     private View photoBtn;
-    /** 음소거 판단 필드 */
+    /**
+     * 음소거 판단 필드
+     */
     boolean isMute = true;
-    /** 플래시 판단 필드 */
+    /**
+     * 플래시 판단 필드
+     */
     int flashMode = ImageCapture.FLASH_MODE_OFF;
-    /** 타이머 시간 설정 필드 */
+    /**
+     * 타이머 시간 설정 필드
+     */
     int time = 0;
     /**
      * 필터 버튼
@@ -175,7 +186,6 @@ public class MainActivity extends AppCompatActivity {
         dp4 = Utils.dp2px(this, 4);
         dp12 = Utils.dp2px(this, 12);
         dp40 = Utils.dp2px(this, 40);
-        dp100 = Utils.dp2px(this, 100);
 
         mOutputBaseDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_PICTURES);
         mCurrentStickerResourceId = 0;
@@ -185,11 +195,8 @@ public class MainActivity extends AppCompatActivity {
         mScreenRatios.add(ScreenRatio.S4_3);
         mScreenRatios.add(ScreenRatio.S16_9);
 
-        if (savedInstanceState != null) {
-                mLensFacing = savedInstanceState.getInt(STATE_LENS_FACING, CameraSelector.LENS_FACING_BACK);
-        }
-
-        mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
+        if (savedInstanceState != null)
+            mLensFacing = savedInstanceState.getInt(STATE_LENS_FACING, CameraSelector.LENS_FACING_BACK);
 
         pnlMain = findViewById(R.id.pnlMain);
         pnlTop = findViewById(R.id.pnlTop);
@@ -210,16 +217,12 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 이벤트 리스너 등록 ]
 
-        // region [ 설정 버튼 클릭시]
-
-        Button settingBtn = (Button) findViewById(R.id.settingBtn);
-        settingBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Intent intent = new Intent(getApplicationContext(),PopActivity.class);
-                startActivity(intent);
-            }
+        // region [ 설정 버튼 클릭 시 ]
+        settingBtn.setOnClickListener(view -> {
+            Intent intent = new Intent(getApplicationContext(), PopActivity.class);
+            startActivity(intent);
         });
+        // endregion
 
         // region [ 비율 버튼 클릭 시 ]
         rationBtn.setOnClickListener(v -> {
@@ -245,7 +248,27 @@ public class MainActivity extends AppCompatActivity {
 
             mScreenRatio = mScreenRatios.get(nextIndex);
             mPreviewTransformation = null;
+
             onWindowFocusChanged(true);
+        });
+        // endregion
+
+        // region [ 화면 전환 버튼 클릭 시 ]
+        reverseBtn.setOnClickListener(view -> {
+            // 클릭 시 화면 FRONT > BACK / BACK > FRONT
+            if (mLensFacing == CameraSelector.LENS_FACING_FRONT) {
+                mLensFacing = CameraSelector.LENS_FACING_BACK;
+            } else {
+                mLensFacing = CameraSelector.LENS_FACING_FRONT;
+            }
+            // 새로운 mLensFacing 값을 mCameraSelector 에 넣는다.
+            mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
+
+            // UseCases reload
+            bindAllCameraUseCases();
+
+            // GraphicOverlay clear
+            if (graphicOverlay != null) graphicOverlay.clear();
         });
         // endregion
 
@@ -431,14 +454,14 @@ public class MainActivity extends AppCompatActivity {
         });
         // endregion
 
-        // region [ 사진 버튼 클릭 시 ]
+        // region [ 촬영 버튼 클릭 시 ]
         photoBtn.setOnClickListener(v -> {
             Timer timer = new Timer();
             TimerTask timerTask = new TimerTask() {
                 @Override
                 public void run() {
                     takePicture();
-                    if (isMute == true) {
+                    if (isMute) {
                         MediaActionSound sound = new MediaActionSound();
                         sound.play(MediaActionSound.SHUTTER_CLICK);
                     }
@@ -447,66 +470,49 @@ public class MainActivity extends AppCompatActivity {
             timer.schedule(timerTask, time);
         });
 
-//        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (isMute == true) {
-//                    isMute = false;
-//                } else {
-//                    isMute = true;
-//                }
-//            }
-//        });
+        //        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
+        //            @Override
+        //            public void onClick(View view) {
+        //                if (isMute == true) {
+        //                    isMute = false;
+        //                } else {
+        //                    isMute = true;
+        //                }
+        //            }
+        //        });
 
-//        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
-//        (플래시버튼).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (flashMode == ImageCapture.FLASH_MODE_OFF) {
-//                    flashMode = ImageCapture.FLASH_MODE_ON;
-//                } else {
-//                    flashMode = ImageCapture.FLASH_MODE_OFF;
-//                }
-//                openCamera();
-//            }
-//        });
+        //        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
+        //        (플래시버튼).setOnClickListener(new View.OnClickListener() {
+        //            @Override
+        //            public void onClick(View view) {
+        //                if (flashMode == ImageCapture.FLASH_MODE_OFF) {
+        //                    flashMode = ImageCapture.FLASH_MODE_ON;
+        //                } else {
+        //                    flashMode = ImageCapture.FLASH_MODE_OFF;
+        //                }
+        //                openCamera();
+        //            }
+        //        });
 
-//        // 타이머 클릭 시 time의 시간 후에 사진 촬영 기능을 수행한다.
-//        (타이머버튼).setOnClickListener(new View.OnClickListener() {
-//            @Override
-//            public void onClick(View view) {
-//                if (time == 0) {
-//                    time = 3000;
-//                } else if (time == 3000) {
-//                    time = 5000;
-//                } else if (time == 5000) {
-//                    time = 7000;
-//                } else {
-//                    time = 0;
-//                }
-//            }
-//        });
-
-        // endregion
+        //        // 타이머 클릭 시 time의 시간 후에 사진 촬영 기능을 수행한다.
+        //        (타이머버튼).setOnClickListener(new View.OnClickListener() {
+        //            @Override
+        //            public void onClick(View view) {
+        //                if (time == 0) {
+        //                    time = 3000;
+        //                } else if (time == 3000) {
+        //                    time = 5000;
+        //                } else if (time == 5000) {
+        //                    time = 7000;
+        //                } else {
+        //                    time = 0;
+        //                }
+        //            }
+        //        });
 
         // endregion
 
-        // 화면 전환 버튼 클릭시 실행
-        reverseBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                // 클릭 시 화면 FRONT > BACK / BACK > FRONT
-                if (mLensFacing == CameraSelector.LENS_FACING_FRONT) {
-                    mLensFacing = CameraSelector.LENS_FACING_BACK;
-                } else {
-                    mLensFacing = CameraSelector.LENS_FACING_FRONT;
-                }
-                // 새로운 mLensFacing 값을 mCameraSelector 에 넣는다.
-                mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
-                // 값으로 새롭게 카메라를 연다.
-                openCamera();
-            }
-        });
+        // endregion
 
         // 카메라 권한을 확인하기 위한 코드 실행
         checkPermission();
@@ -640,12 +646,7 @@ public class MainActivity extends AppCompatActivity {
         filter.setPadding(dp4, dp4, dp4, dp4);
         filter.setAdjustViewBounds(true);
         filter.setImageResource(resId);
-        filter.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Toast.makeText(MainActivity.this, "필터 클릭 되었어요.", Toast.LENGTH_SHORT).show();
-            }
-        });
+        filter.setOnClickListener(v -> Toast.makeText(MainActivity.this, "필터 클릭 되었어요.", Toast.LENGTH_SHORT).show());
 
         listFilter.addView(filter);
     }
@@ -726,8 +727,7 @@ public class MainActivity extends AppCompatActivity {
      */
     private void bindAllCameraUseCases() {
         Log.d(TAG, "bindAllCameraUseCases()");
-        if (mCameraProvider == null) return;
-        mCameraProvider.unbindAll();
+        unBindAllUseCases();
 
         bindPreviewUseCase();
         bindImageCaptureUseCase();
@@ -812,6 +812,28 @@ public class MainActivity extends AppCompatActivity {
     }
 
     /**
+     * 카메라의 UseCases 바인딩
+     */
+    private void unBindAllUseCases() {
+        Log.d(TAG, "unBindAllUseCases()");
+        if (mCameraProvider == null) return;
+        mCameraProvider.unbindAll();
+
+        if (mPreviewUseCase != null) mPreviewUseCase = null;
+        if (mImageAnalysisUseCase != null) mImageAnalysisUseCase = null;
+        if (mImageCaptureUseCase != null) mImageCaptureUseCase = null;
+
+        if (mFaceProcessing != null) {
+            mFaceProcessing.stop();
+            mFaceProcessing = null;
+        }
+
+        if (graphicOverlay != null) {
+            graphicOverlay.clear();
+        }
+    }
+
+    /**
      * 사진 촬영 함수
      */
     private void takePicture() {
@@ -836,12 +858,13 @@ public class MainActivity extends AppCompatActivity {
      * Android Q 이상일 때의 사진 촬영
      */
     private void takePictureOverAndroidQ(String imageFileName) {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
+
         ContentValues contentValues = new ContentValues();
         contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, imageFileName);
         contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q)
-            contentValues.put(MediaStore.Images.Media.IS_PENDING, 1);
+        contentValues.put(MediaStore.Images.Media.IS_PENDING, 1);
+        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/MrPhoto");
 
         ImageCapture.Metadata metaData = new ImageCapture.Metadata();
 
@@ -850,16 +873,16 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         mImageCaptureUseCase.takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
+            @RequiresApi(api = Build.VERSION_CODES.Q)
             @Override
             public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
                 Uri savedUri = outputFileResults.getSavedUri();
                 if (savedUri == null) return;
 
-                // 갤러리에 새로운 사진이 업데이트 되었다고 통보
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Intent intent = new Intent(android.hardware.Camera.ACTION_NEW_PICTURE, savedUri);
-                    sendBroadcast(intent);
-                }
+                // 사진 저장이 완료되었다고 resolver 에게 통보
+                contentValues.clear();
+                contentValues.put(MediaStore.Images.Media.IS_PENDING, 0);
+                getContentResolver().update(savedUri, contentValues, null, null);
 
                 runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 찍었습니다.", Toast.LENGTH_SHORT).show());
             }
@@ -875,6 +898,7 @@ public class MainActivity extends AppCompatActivity {
      * Android Q 미만일 때의 사진 촬영
      */
     private void takePictureUnderAndroidQ(String imageFileName) {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return;
 
         File imageFile = new File(getOutputDirectory(), imageFileName);
 
@@ -885,34 +909,46 @@ public class MainActivity extends AppCompatActivity {
             Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
         }
 
-        ImageCapture.Metadata metaData = new ImageCapture.Metadata();
-
-        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(imageFile)
-                .setMetadata(metaData)
-                .build();
-
-        mImageCaptureUseCase.takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
+        mImageCaptureUseCase.takePicture(ContextCompat.getMainExecutor(this), new ImageCapture.OnImageCapturedCallback() {
             @Override
-            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-                Uri savedUri = outputFileResults.getSavedUri();
-                if (savedUri == null) return;
+            @SuppressLint("UnsafeExperimentalUsageError")
+            public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
+                Image image = imageProxy.getImage();
+                if (image == null) throw new RuntimeException("이미지가 없습니다.");
 
-                // 갤러리에 새로운 사진이 업데이트 되었다고 통보
-                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    Intent intent = new Intent(android.hardware.Camera.ACTION_NEW_PICTURE, savedUri);
-                    sendBroadcast(intent);
+                // 이미지 프록시에서 바이트 버퍼 가져오기
+                ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
+                byte[] bytes = new byte[byteBuffer.capacity()];
+                byteBuffer.get(bytes);
+
+                // 가져온 바이트 배열 이미지 파일에 저장
+                try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+                    fos.write(bytes);
+                } catch (IOException e) {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 저장하는데 실패 했습니다.", Toast.LENGTH_SHORT).show());
+                    return;
                 }
 
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 찍었습니다.", Toast.LENGTH_SHORT).show());
+                // 이미지 사용을 다 한 후 종료
+                imageProxy.close();
+
+                // 새로운 이미지가 저장 되었다는 broadcast 전송
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(imageFile)));
+
+                // 새로운 이미지 촬영 완료 Toast 전송
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진 촬영을 완료 했습니다.", Toast.LENGTH_SHORT).show());
             }
 
             @Override
             public void onError(@NonNull ImageCaptureException exception) {
-                Log.w(TAG, exception.getMessage(), exception);
+                Log.e(TAG, exception.getMessage(), exception);
             }
         });
     }
 
+    /**
+     * 인식한 얼굴을 그릴 때 사용하는 함수
+     */
     private void drawFaces(List<Face> faces, InputImage inputImage, Bitmap originalCameraImage) {
         graphicOverlay.clear();
 
@@ -941,9 +977,12 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 프리뷰의 비율과 이미지의 비율을 계산하는 클래스
+     */
     public static class PreviewTransformation {
-        float xRatio = 0.0f;
-        float yRatio = 0.0f;
+        float xRatio;
+        float yRatio;
 
         public PreviewTransformation(Size viewSize, Size imageSize, int rotationDegree) {
             if (rotationDegree == 0 || rotationDegree == 180) {
@@ -964,6 +1003,9 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+    /**
+     * 사진 저장 폴더 설정
+     */
     private File getOutputDirectory() {
         File outputDir = new File(mOutputBaseDir, "MrPhoto");
         if (!outputDir.exists()) if (!outputDir.mkdirs()) return getFilesDir();

@@ -45,5 +45,4 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
             canvas.drawBitmap(resizedFaceSticker, xScale(face.getBoundingBox().left), yScale(face.getBoundingBox().top), null);
         }
     }
-
 }

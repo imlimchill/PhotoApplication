@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.view.Display;
 import android.view.WindowManager;
+
 import androidx.appcompat.app.AppCompatActivity;
 
 //설정창 작업은 여기서 하게 됨.
