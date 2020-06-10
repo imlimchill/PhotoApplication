@@ -710,6 +710,8 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
+        mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
+
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
             try {
