@@ -124,6 +124,8 @@ public class MainActivity extends AppCompatActivity {
     private View photoBtn;
     /** 음소거 판단 필드 */
     boolean isMute = true;
+    /** 플래시 판단 필드 */
+    int flashMode = ImageCapture.FLASH_MODE_OFF;
     /**
      * 필터 버튼
      */
@@ -444,6 +446,19 @@ public class MainActivity extends AppCompatActivity {
 //                }
 //            }
 //        });
+
+//        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
+//        (플래시버튼).setOnClickListener(new View.OnClickListener() {
+//            @Override
+//            public void onClick(View view) {
+//                if (flashMode == ImageCapture.FLASH_MODE_OFF) {
+//                    flashMode = ImageCapture.FLASH_MODE_ON;
+//                } else {
+//                    flashMode = ImageCapture.FLASH_MODE_OFF;
+//                }
+//                openCamera();
+//            }
+//        });
         // endregion
 
         // endregion
@@ -762,6 +777,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTargetResolution(mPreviewSize)
                 .setTargetAspectRatioCustom(mAspectRatio)
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
+                .setFlashMode(flashMode)
                 .build();
 
         mCameraProvider.bindToLifecycle(this, mCameraSelector, mImageCaptureUseCase);
