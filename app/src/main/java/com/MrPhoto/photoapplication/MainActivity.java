@@ -137,7 +137,9 @@ public class MainActivity extends AppCompatActivity {
      * 플래시 판단 필드
      */
     int flashMode = ImageCapture.FLASH_MODE_OFF;
-    /** 타이머 시간 설정 필드 */
+    /**
+     * 타이머 시간 설정 필드
+     */
     int time = 0;
     /**
      * 필터 버튼
@@ -452,7 +454,7 @@ public class MainActivity extends AppCompatActivity {
         });
         // endregion
 
-        // region [ 사진 버튼 클릭 시 ]
+        // region [ 촬영 버튼 클릭 시 ]
         photoBtn.setOnClickListener(v -> {
             Timer timer = new Timer();
             TimerTask timerTask = new TimerTask() {
