@@ -1,9 +1,12 @@
 package com.MrPhoto.photoapplication;
 
+import android.annotation.SuppressLint;
 import android.content.ContentValues;
+import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Color;
+import android.media.Image;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -28,6 +31,7 @@ import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
 import androidx.camera.core.ImageCaptureException;
+import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
 import androidx.camera.view.PreviewView;
@@ -43,6 +47,9 @@ import com.google.mlkit.vision.common.InputImage;
 import com.google.mlkit.vision.face.Face;
 
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
@@ -784,6 +791,51 @@ public class MainActivity extends AppCompatActivity {
      */
     private void takePictureUnderAndroidQ(String imageFileName) {
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return;
+
+        File imageFile = new File(getOutputDirectory(), imageFileName);
+
+        try {
+            if (!imageFile.createNewFile()) throw new IOException("파일 생성에 실패 했습니다.");
+        } catch (IOException e) {
+            Log.w(TAG, e.getMessage(), e);
+            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
+        }
+
+        mImageCaptureUseCase.takePicture(ContextCompat.getMainExecutor(this), new ImageCapture.OnImageCapturedCallback() {
+            @Override
+            @SuppressLint("UnsafeExperimentalUsageError")
+            public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
+                Image image = imageProxy.getImage();
+                if (image == null) throw new RuntimeException("이미지가 없습니다.");
+
+                // 이미지 프록시에서 바이트 버퍼 가져오기
+                ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
+                byte[] bytes = new byte[byteBuffer.capacity()];
+                byteBuffer.get(bytes);
+
+                // 가져온 바이트 배열 이미지 파일에 저장
+                try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+                    fos.write(bytes);
+                } catch (IOException e) {
+                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 저장하는데 실패 했습니다.", Toast.LENGTH_SHORT).show());
+                    return;
+                }
+
+                // 이미지 사용을 다 한 후 종료
+                imageProxy.close();
+
+                // 새로운 이미지가 저장 되었다는 broadcast 전송
+                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(imageFile)));
+
+                // 새로운 이미지 촬영 완료 Toast 전송
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진 촬영을 완료 했습니다.", Toast.LENGTH_SHORT).show());
+            }
+
+            @Override
+            public void onError(@NonNull ImageCaptureException exception) {
+                Log.e(TAG, exception.getMessage(), exception);
+            }
+        });
     }
 
     private void drawFaces(List<Face> faces, InputImage inputImage, Bitmap originalCameraImage) {
