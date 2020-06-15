@@ -31,8 +31,7 @@
                 android:layout_height="wrap_content"
                 android:background="#00000000"
                 android:paddingStart="12dp"
-                tools:ignore="RtlSymmetry"
-                android:orientation="horizontal">
+                tools:ignore="RtlSymmetry">
 
 
 
@@ -56,7 +55,7 @@
             app:alignItems="flex_start"
             app:flexDirection="row"
             app:flexWrap="wrap"
-            app:justifyContent="space_between" />
+            app:justifyContent="flex_start" />
 
     </ScrollView>
 
