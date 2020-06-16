@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 음소거 판단 필드
      */
-    boolean isMute = true;
+    protected static boolean isMute = true;
     /**
      * 플래시 판단 필드
      */
@@ -469,17 +469,6 @@ public class MainActivity extends AppCompatActivity {
             };
             timer.schedule(timerTask, time);
         });
-
-        //        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
-        //            @Override
-        //            public void onClick(View view) {
-        //                if (isMute == true) {
-        //                    isMute = false;
-        //                } else {
-        //                    isMute = true;
-        //                }
-        //            }
-        //        });
 
         //        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
         //        (플래시버튼).setOnClickListener(new View.OnClickListener() {

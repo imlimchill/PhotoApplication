@@ -3,13 +3,20 @@ package com.MrPhoto.photoapplication;
 import android.content.Context;
 import android.os.Bundle;
 import android.view.Display;
+import android.view.View;
 import android.view.WindowManager;
+import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
 
 //설정창 작업은 여기서 하게 됨.
 
 public class PopActivity extends AppCompatActivity {
+
+    Button flashBtn;
+    Button timerBtn;
+    Button muteBtn;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -22,5 +29,20 @@ public class PopActivity extends AppCompatActivity {
         int height = (int) (display.getHeight() * 0.2);
         getWindow().getAttributes().width = width;
         getWindow().getAttributes().height = height;
+
+        flashBtn = (Button)findViewById(R.id.flashBtn);
+        timerBtn = (Button)findViewById(R.id.timerBtn);
+        muteBtn = (Button)findViewById(R.id.muteBtn);
+
+        muteBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (MainActivity.isMute == true) {
+                    MainActivity.isMute = false;
+                } else {
+                    MainActivity.isMute = true;
+                }
+            }
+        });
     }
 }
