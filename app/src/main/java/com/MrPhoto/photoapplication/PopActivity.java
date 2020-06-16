@@ -59,6 +59,21 @@ public class PopActivity extends AppCompatActivity {
             }
         });
 
-        
+         // 타이머 클릭 시 time의 시간 후에 사진 촬영 기능을 수행한다.
+        timerBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (MainActivity.time == 0) {
+                    MainActivity.time = 3000;
+                } else if (MainActivity.time == 3000) {
+                    MainActivity.time = 5000;
+                } else if (MainActivity.time == 5000) {
+                    MainActivity.time = 7000;
+                } else {
+                    MainActivity.time = 0;
+                }
+            }
+        });
+
     }
 }

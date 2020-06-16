@@ -140,7 +140,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 타이머 시간 설정 필드
      */
-    int time = 0;
+    static int time = 0;
     /**
      * 필터 버튼
      */
@@ -469,36 +469,6 @@ public class MainActivity extends AppCompatActivity {
             };
             timer.schedule(timerTask, time);
         });
-
-        //        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
-        //        (플래시버튼).setOnClickListener(new View.OnClickListener() {
-        //            @Override
-        //            public void onClick(View view) {
-        //                if (flashMode == ImageCapture.FLASH_MODE_OFF) {
-        //                    flashMode = ImageCapture.FLASH_MODE_ON;
-        //                } else {
-        //                    flashMode = ImageCapture.FLASH_MODE_OFF;
-        //                }
-        //                openCamera();
-        //            }
-        //        });
-
-        //        // 타이머 클릭 시 time의 시간 후에 사진 촬영 기능을 수행한다.
-        //        (타이머버튼).setOnClickListener(new View.OnClickListener() {
-        //            @Override
-        //            public void onClick(View view) {
-        //                if (time == 0) {
-        //                    time = 3000;
-        //                } else if (time == 3000) {
-        //                    time = 5000;
-        //                } else if (time == 5000) {
-        //                    time = 7000;
-        //                } else {
-        //                    time = 0;
-        //                }
-        //            }
-        //        });
-
         // endregion
 
         // endregion
