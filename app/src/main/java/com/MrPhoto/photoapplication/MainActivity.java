@@ -11,6 +11,7 @@ import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -456,18 +457,21 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 촬영 버튼 클릭 시 ]
         photoBtn.setOnClickListener(v -> {
-            Timer timer = new Timer();
-            TimerTask timerTask = new TimerTask() {
+            CountDownTimer count = new CountDownTimer(time, 1000) {
                 @Override
-                public void run() {
+                public void onTick(long l) {
+                    // TODO 1초에 숫자 하나씩 줄어들도록 구현하기
+                }
+
+                @Override
+                public void onFinish() {
                     takePicture();
-                    if (isMute) {
+                    if (isMute == 0) {
                         MediaActionSound sound = new MediaActionSound();
                         sound.play(MediaActionSound.SHUTTER_CLICK);
                     }
                 }
-            };
-            timer.schedule(timerTask, time);
+            }.start();
         });
         // endregion
 
