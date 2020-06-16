@@ -6,6 +6,7 @@ import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
 import android.widget.Button;
+import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.ImageCapture;
@@ -14,9 +15,9 @@ import androidx.camera.core.ImageCapture;
 
 public class PopActivity extends AppCompatActivity {
 
-    Button flashBtn;
-    Button timerBtn;
-    Button muteBtn;
+    ImageView flashBtn;
+    ImageView timerBtn;
+    ImageView muteBtn;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -31,18 +32,49 @@ public class PopActivity extends AppCompatActivity {
         getWindow().getAttributes().width = width;
         getWindow().getAttributes().height = height;
 
-        flashBtn = (Button)findViewById(R.id.flashBtn);
-        timerBtn = (Button)findViewById(R.id.timerBtn);
-        muteBtn = (Button)findViewById(R.id.muteBtn);
+        flashBtn = (ImageView) findViewById(R.id.flashBtn);
+        timerBtn = (ImageView) findViewById(R.id.timerBtn);
+        muteBtn = (ImageView) findViewById(R.id.muteBtn);
+
+        // 음소거의 아이콘 설정
+        switch (MainActivity.isMute) {
+            case 1: muteBtn.setImageResource(R.drawable.mute_on);
+                break;
+            case 0: muteBtn.setImageResource(R.drawable.mute_off);
+                break;
+        }
+
+        // 플래시의 아이콘 설정
+        switch (MainActivity.flashMode) {
+            case ImageCapture.FLASH_MODE_OFF: flashBtn.setImageResource((R.drawable.flash_off));
+                break;
+            case ImageCapture.FLASH_MODE_ON: flashBtn.setImageResource((R.drawable.flash_on));
+                break;
+        }
+
+        // 타이머의 아이콘 설정
+        switch (MainActivity.time) {
+            case 0: timerBtn.setImageResource(R.drawable.timer_off);
+                    break;
+            case 3000: timerBtn.setImageResource(R.drawable.timer_on3);
+                break;
+            case 5000: timerBtn.setImageResource(R.drawable.timer_on5);
+                break;
+            case 7000: timerBtn.setImageResource(R.drawable.timer_on7);
+                break;
+        }
+
 
         // 음소거 버튼 클릭시 음소거 기능을 끄고 킬 수 있는 기능 구현
         muteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                if (MainActivity.isMute == true) {
-                    MainActivity.isMute = false;
+                if (MainActivity.isMute == 1) {
+                    MainActivity.isMute = 0;
+                    muteBtn.setImageResource(R.drawable.mute_off);
                 } else {
-                    MainActivity.isMute = true;
+                    MainActivity.isMute = 1;
+                    muteBtn.setImageResource(R.drawable.mute_on);
                 }
             }
         });
@@ -52,9 +84,11 @@ public class PopActivity extends AppCompatActivity {
             @Override
             public void onClick(View view) {
                 if (MainActivity.flashMode == ImageCapture.FLASH_MODE_OFF) {
+                    flashBtn.setImageResource(R.drawable.flash_on);
                     MainActivity.flashMode = ImageCapture.FLASH_MODE_ON;
                 } else {
                     MainActivity.flashMode = ImageCapture.FLASH_MODE_OFF;
+                    flashBtn.setImageResource(R.drawable.flash_off);
                 }
             }
         });
@@ -65,12 +99,16 @@ public class PopActivity extends AppCompatActivity {
             public void onClick(View view) {
                 if (MainActivity.time == 0) {
                     MainActivity.time = 3000;
+                    timerBtn.setImageResource(R.drawable.timer_on3);
                 } else if (MainActivity.time == 3000) {
                     MainActivity.time = 5000;
+                    timerBtn.setImageResource(R.drawable.timer_on5);
                 } else if (MainActivity.time == 5000) {
                     MainActivity.time = 7000;
+                    timerBtn.setImageResource(R.drawable.timer_on7);
                 } else {
                     MainActivity.time = 0;
+                    timerBtn.setImageResource(R.drawable.timer_off);
                 }
             }
         });
