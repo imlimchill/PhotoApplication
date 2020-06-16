@@ -132,7 +132,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 음소거 판단 필드
      */
-    protected static boolean isMute = true;
+    protected static int isMute = 0;
     /**
      * 플래시 판단 필드
      */

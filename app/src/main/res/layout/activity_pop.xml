@@ -8,25 +8,39 @@
     android:background="#FFFFFFFF"
     android:orientation="horizontal">
 
-
-    <Button
-        android:id="@+id/flash"
+    <LinearLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="플래쉬" />
+        android:layout_height="120dp"
+        android:orientation="horizontal">
 
-    <Button
-        android:id="@+id/timer"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="타이머" />
+        <ImageView
+            android:id="@+id/flashBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginLeft="20dp"
+            android:background="#00ff0000"
+            android:src="@drawable/flash_off" />
 
-    <Button
-        android:id="@+id/mute"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_weight="1"
-        android:text="음소거" />
+        <ImageView
+            android:id="@+id/timerBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:background="#00ff0000"
+            android:src="@drawable/timer_off" />
+
+        <ImageView
+            android:id="@+id/muteBtn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_weight="1"
+            android:layout_marginTop="5dp"
+            android:layout_marginLeft="20dp"
+            android:layout_marginRight="20dp"
+            android:background="#00ff0000"
+            android:src="@drawable/mute_off" />
+
+    </LinearLayout>
+
 </LinearLayout>
