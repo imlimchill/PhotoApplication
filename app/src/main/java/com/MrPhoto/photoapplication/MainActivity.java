@@ -136,7 +136,7 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 플래시 판단 필드
      */
-    int flashMode = ImageCapture.FLASH_MODE_OFF;
+    protected static int flashMode = ImageCapture.FLASH_MODE_OFF;
     /**
      * 타이머 시간 설정 필드
      */

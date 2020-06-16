@@ -8,6 +8,7 @@ import android.view.WindowManager;
 import android.widget.Button;
 
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.camera.core.ImageCapture;
 
 //설정창 작업은 여기서 하게 됨.
 
@@ -34,6 +35,7 @@ public class PopActivity extends AppCompatActivity {
         timerBtn = (Button)findViewById(R.id.timerBtn);
         muteBtn = (Button)findViewById(R.id.muteBtn);
 
+        // 음소거 버튼 클릭시 음소거 기능을 끄고 킬 수 있는 기능 구현
         muteBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -44,5 +46,19 @@ public class PopActivity extends AppCompatActivity {
                 }
             }
         });
+
+        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
+        flashBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (MainActivity.flashMode == ImageCapture.FLASH_MODE_OFF) {
+                    MainActivity.flashMode = ImageCapture.FLASH_MODE_ON;
+                } else {
+                    MainActivity.flashMode = ImageCapture.FLASH_MODE_OFF;
+                }
+            }
+        });
+
+        
     }
 }
