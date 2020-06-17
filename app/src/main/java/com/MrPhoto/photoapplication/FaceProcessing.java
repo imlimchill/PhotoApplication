@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 import android.util.Log;
 
 import androidx.annotation.NonNull;
-import androidx.camera.core.ImageInfo;
 import androidx.camera.core.ImageProxy;
 
 import com.MrPhoto.photoapplication.util.BitmapUtils;

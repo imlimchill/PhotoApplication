@@ -57,8 +57,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -413,10 +411,10 @@ public class MainActivity extends AppCompatActivity {
             // 필터 버튼의 리스트
             LinearLayout listFilterItems = pnlFilter.findViewById(R.id.list_filter_items);
 
-            // 실제 스티커 리스트
+            // 실제 필터 리스트
             final FlexboxLayout listFilter = pnlFilter.findViewById(R.id.list_filter);
 
-            //스티커 버튼의 레이아웃 정의
+            // 필터 버튼의 레이아웃 정의
             LinearLayout.LayoutParams btnFilterButtonLayoutParams = new LinearLayout.LayoutParams(dp40, dp40);
             btnFilterButtonLayoutParams.setMarginEnd(dp12);
 
@@ -427,14 +425,13 @@ public class MainActivity extends AppCompatActivity {
             btnFav.setAdjustViewBounds(true);
             btnFav.setImageResource(R.drawable.favorite);
             btnFav.setOnClickListener(v15 -> {
+                listFilter.removeAllViews();
                 // 스티커의 레이아웃 정의
                 FlexboxLayout.LayoutParams filterLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 filterLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-
-                addFilter(filterLayoutParams, listFilter, R.drawable.filter_list);
-                addFilter(filterLayoutParams, listFilter, R.drawable.photo);
-                //즐겨찾기,전체 스티커 아이콘 계속 누르면 무한 생성됨. 수정할 부분
+                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
+                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
             });
             listFilterItems.addView(btnFav);
 
@@ -445,6 +442,7 @@ public class MainActivity extends AppCompatActivity {
             btnAll.setAdjustViewBounds(true);
             btnAll.setImageResource(R.drawable.filter_list);
             btnAll.setOnClickListener(v16 -> {
+                listFilter.removeAllViews();
                 FlexboxLayout.LayoutParams filterLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 filterLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
@@ -544,6 +542,12 @@ public class MainActivity extends AppCompatActivity {
         int bottomHeight = topBottomFrameSize - topHeight;
         Log.d(TAG, String.format("Top Height: %dpx, Bottom Height: %dpx", topHeight, bottomHeight));
 
+        //4:3 or 16:9일때 topHeight 없애기
+        if (mScreenRatio == ScreenRatio.S4_3 || mScreenRatio == ScreenRatio.S16_9) {
+            bottomHeight = topBottomFrameSize;
+            topHeight = 0;
+        }
+
         // 여백 공간이 안맞는 경우 상단 빈 여백 제거
         if (bottomHeight < pnlBottomBtnHeight) {
             bottomHeight = topBottomFrameSize;
@@ -607,8 +611,12 @@ public class MainActivity extends AppCompatActivity {
         sticker.setAdjustViewBounds(true);
         sticker.setImageResource(resId);
         sticker.setOnClickListener(v -> {
-            if (mImageAnalysisUseCase == null) bindAnalysisUseCase();
-            mCurrentStickerResourceId = resId;
+            if (mImageAnalysisUseCase == null) {
+                bindAnalysisUseCase();
+                mCurrentStickerResourceId = resId;
+            } else {
+
+            }
         });
         listSticker.addView(sticker);
     }
@@ -617,6 +625,12 @@ public class MainActivity extends AppCompatActivity {
      * 필터 리스트를 클릭 한 경우 동적으로 필터 추가
      */
     public void addFilter(FlexboxLayout.LayoutParams filterLayoutParams, FlexboxLayout listFilter, @DrawableRes int resId) {
+        int width = pnlMain.getMeasuredWidth() - Utils.dp2px(this, 24);
+        int imgSize = width / 4 - Utils.dp2px(this, 8);
+
+        filterLayoutParams.width = imgSize;
+        filterLayoutParams.height = imgSize;
+
         ImageView filter = new ImageView(MainActivity.this);
         filter.setLayoutParams(filterLayoutParams);
         filter.setPadding(dp4, dp4, dp4, dp4);
@@ -688,6 +702,7 @@ public class MainActivity extends AppCompatActivity {
 
         mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
 
+        // 카메라 정보 가져오는 작업
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
             try {
@@ -750,6 +765,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTargetResolution(mPreviewSize)
                 .build();
 
+        // 이미지 분석을 하려면 이미지 분석기가 필요하니 선언언
         mImageAnalysisUseCase.setAnalyzer(ContextCompat.getMainExecutor(this),
                 imageProxy -> mFaceProcessing.processImageProxy(imageProxy));
 
@@ -937,6 +953,7 @@ public class MainActivity extends AppCompatActivity {
         // Log.d(TAG, "Original Image Width: " + originalCameraImage.getWidth() + ", Original Image Height: " + originalCameraImage.getHeight());
         // Log.d(TAG, "Image Width: " + inputImage.getWidth() + ", Image Height: " + inputImage.getHeight() + ", Rotation: " + inputImage.getRotationDegrees());
 
+        // 뷰사이즈랑 이미지 사이지가 다르니 맞춰주기
         if (mPreviewTransformation == null) {
             mPreviewTransformation = new PreviewTransformation(
                     /* 뷰 사이즈 = */ new Size(graphicOverlay.getMeasuredWidth(), graphicOverlay.getMeasuredHeight()),
