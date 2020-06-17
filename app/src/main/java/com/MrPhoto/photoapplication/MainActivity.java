@@ -11,6 +11,7 @@ import android.media.MediaActionSound;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
+import android.os.CountDownTimer;
 import android.os.Environment;
 import android.provider.MediaStore;
 import android.util.Log;
@@ -55,8 +56,6 @@ import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 import java.util.Locale;
-import java.util.Timer;
-import java.util.TimerTask;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 
@@ -132,15 +131,15 @@ public class MainActivity extends AppCompatActivity {
     /**
      * 음소거 판단 필드
      */
-    boolean isMute = false;
+    protected static int isMute = 0;
     /**
      * 플래시 판단 필드
      */
-    int flashMode = ImageCapture.FLASH_MODE_OFF;
+    protected static int flashMode = ImageCapture.FLASH_MODE_OFF;
     /**
      * 타이머 시간 설정 필드
      */
-    int time = 0;
+    static int time = 0;
     /**
      * 필터 버튼
      */
@@ -409,7 +408,7 @@ public class MainActivity extends AppCompatActivity {
             // 실제 필터 리스트
             final FlexboxLayout listFilter = pnlFilter.findViewById(R.id.list_filter);
 
-            //필터 버튼의 레이아웃 정의
+            // 필터 버튼의 레이아웃 정의
             LinearLayout.LayoutParams btnFilterButtonLayoutParams = new LinearLayout.LayoutParams(dp40, dp40);
             btnFilterButtonLayoutParams.setMarginEnd(dp12);
 
@@ -425,10 +424,8 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams filterLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 filterLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-
                 addFilter(filterLayoutParams, listFilter, R.drawable.temp);
                 addFilter(filterLayoutParams, listFilter, R.drawable.temp);
-
             });
             listFilterItems.addView(btnFav);
 
@@ -458,63 +455,24 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 촬영 버튼 클릭 시 ]
         photoBtn.setOnClickListener(v -> {
-            Timer timer = new Timer();
-            TimerTask timerTask = new TimerTask() {
+            CountDownTimer count = new CountDownTimer(time, 1000) {
                 @Override
-                public void run() {
+                public void onTick(long l) {
+                    // TODO 1초에 숫자 하나씩 줄어들도록 구현하기
+                }
+
+                @Override
+                public void onFinish() {
                     new Thread(() -> {
-                        if (!isMute) {
+                        if (isMute == 0) {
                             MediaActionSound sound = new MediaActionSound();
                             sound.play(MediaActionSound.SHUTTER_CLICK);
                         }
                     }).start();
-
                     takePicture();
                 }
-            };
-            timer.schedule(timerTask, time);
+            }.start();
         });
-
-        //        (음소거 버튼).setOnClickListener(new View.OnClickListener() {
-        //            @Override
-        //            public void onClick(View view) {
-        //                if (isMute == true) {
-        //                    isMute = false;
-        //                } else {
-        //                    isMute = true;
-        //                }
-        //            }
-        //        });
-
-        //        // 플래시 버튼 클릭시 플래시 기능을 끄고 킬 수 있는 기능 구현
-        //        (플래시버튼).setOnClickListener(new View.OnClickListener() {
-        //            @Override
-        //            public void onClick(View view) {
-        //                if (flashMode == ImageCapture.FLASH_MODE_OFF) {
-        //                    flashMode = ImageCapture.FLASH_MODE_ON;
-        //                } else {
-        //                    flashMode = ImageCapture.FLASH_MODE_OFF;
-        //                }
-        //                openCamera();
-        //            }
-        //        });
-
-        //        // 타이머 클릭 시 time의 시간 후에 사진 촬영 기능을 수행한다.
-        //        (타이머버튼).setOnClickListener(new View.OnClickListener() {
-        //            @Override
-        //            public void onClick(View view) {
-        //                if (time == 0) {
-        //                    time = 3000;
-        //                } else if (time == 3000) {
-        //                    time = 5000;
-        //                } else if (time == 5000) {
-        //                    time = 7000;
-        //                } else {
-        //                    time = 0;
-        //                }
-        //            }
-        //        });
-
         // endregion
 
         // endregion
@@ -574,9 +532,9 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, String.format("Top Height: %dpx, Bottom Height: %dpx", topHeight, bottomHeight));
 
         //4:3 or 16:9일때 topHeight 없애기
-        if (mScreenRatio==ScreenRatio.S4_3||mScreenRatio==ScreenRatio.S16_9){
+        if (mScreenRatio == ScreenRatio.S4_3 || mScreenRatio == ScreenRatio.S16_9) {
             bottomHeight = topBottomFrameSize;
-            topHeight=0;
+            topHeight = 0;
         }
 
         // 여백 공간이 안맞는 경우 상단 빈 여백 제거
@@ -642,13 +600,10 @@ public class MainActivity extends AppCompatActivity {
         sticker.setAdjustViewBounds(true);
         sticker.setImageResource(resId);
         sticker.setOnClickListener(v -> {
-
-
-
             if (mImageAnalysisUseCase == null) {
                 bindAnalysisUseCase();
-                mCurrentStickerResourceId = resId;}
-            else{
+                mCurrentStickerResourceId = resId;
+            } else {
 
             }
         });
@@ -659,8 +614,8 @@ public class MainActivity extends AppCompatActivity {
      * 필터 리스트를 클릭 한 경우 동적으로 필터 추가
      */
     public void addFilter(FlexboxLayout.LayoutParams filterLayoutParams, FlexboxLayout listFilter, @DrawableRes int resId) {
-        int width = pnlMain.getMeasuredWidth()-Utils.dp2px(this,24);
-        int imgSize = width/4-Utils.dp2px(this,8);
+        int width = pnlMain.getMeasuredWidth() - Utils.dp2px(this, 24);
+        int imgSize = width / 4 - Utils.dp2px(this, 8);
 
         filterLayoutParams.width = imgSize;
         filterLayoutParams.height = imgSize;
@@ -736,7 +691,7 @@ public class MainActivity extends AppCompatActivity {
 
         mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
 
-        //카메라 정보 가져오는 작업
+        // 카메라 정보 가져오는 작업
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
         cameraProviderFuture.addListener(() -> {
             try {
@@ -799,7 +754,7 @@ public class MainActivity extends AppCompatActivity {
                 .setTargetResolution(mPreviewSize)
                 .build();
 
-        //이미지 분석을 하려면 이미지 분석기가 필요하니 선언언
+        // 이미지 분석을 하려면 이미지 분석기가 필요하니 선언언
        mImageAnalysisUseCase.setAnalyzer(ContextCompat.getMainExecutor(this),
                 imageProxy -> mFaceProcessing.processImageProxy(imageProxy));
 
@@ -896,11 +851,9 @@ public class MainActivity extends AppCompatActivity {
 
         ImageCapture.Metadata metaData = new ImageCapture.Metadata();
 
-
         ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getContentResolver(), MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
                 .setMetadata(metaData)
                 .build();
-
 
         mImageCaptureUseCase.takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
             @RequiresApi(api = Build.VERSION_CODES.Q)
@@ -951,7 +904,6 @@ public class MainActivity extends AppCompatActivity {
                 byte[] bytes = new byte[byteBuffer.capacity()];
                 byteBuffer.get(bytes);
 
-
                 // 가져온 바이트 배열 이미지 파일에 저장
                 try (FileOutputStream fos = new FileOutputStream(imageFile)) {
                     fos.write(bytes);
@@ -990,7 +942,7 @@ public class MainActivity extends AppCompatActivity {
         // Log.d(TAG, "Original Image Width: " + originalCameraImage.getWidth() + ", Original Image Height: " + originalCameraImage.getHeight());
         // Log.d(TAG, "Image Width: " + inputImage.getWidth() + ", Image Height: " + inputImage.getHeight() + ", Rotation: " + inputImage.getRotationDegrees());
 
-        //뷰사이즈랑 이미지 사이지가 다르니 맞춰주기
+        // 뷰사이즈랑 이미지 사이지가 다르니 맞춰주기
         if (mPreviewTransformation == null) {
             mPreviewTransformation = new PreviewTransformation(
                     /* 뷰 사이즈 = */ new Size(graphicOverlay.getMeasuredWidth(), graphicOverlay.getMeasuredHeight()),
@@ -1007,8 +959,6 @@ public class MainActivity extends AppCompatActivity {
             Bitmap sticker = BitmapFactory.decodeResource(getResources(), mCurrentStickerResourceId);
             graphicOverlay.add(new FaceGraphic(graphicOverlay, face, sticker));
         }
-
-
     }
 
     /**
