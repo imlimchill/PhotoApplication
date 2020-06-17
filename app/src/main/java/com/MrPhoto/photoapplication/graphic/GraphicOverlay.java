@@ -38,6 +38,7 @@ public class GraphicOverlay extends View {
         return yRatio;
     }
 
+    //
     public void clear() {
         synchronized (lock) {
             graphics.clear();
