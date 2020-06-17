@@ -5,7 +5,6 @@ import android.os.Bundle;
 import android.view.Display;
 import android.view.View;
 import android.view.WindowManager;
-import android.widget.Button;
 import android.widget.ImageView;
 
 import androidx.appcompat.app.AppCompatActivity;
@@ -38,29 +37,37 @@ public class PopActivity extends AppCompatActivity {
 
         // 음소거의 아이콘 설정
         switch (MainActivity.isMute) {
-            case 1: muteBtn.setImageResource(R.drawable.mute_on);
+            case 1:
+                muteBtn.setImageResource(R.drawable.mute_on);
                 break;
-            case 0: muteBtn.setImageResource(R.drawable.mute_off);
+            case 0:
+                muteBtn.setImageResource(R.drawable.mute_off);
                 break;
         }
 
         // 플래시의 아이콘 설정
         switch (MainActivity.flashMode) {
-            case ImageCapture.FLASH_MODE_OFF: flashBtn.setImageResource((R.drawable.flash_off));
+            case ImageCapture.FLASH_MODE_OFF:
+                flashBtn.setImageResource((R.drawable.flash_off));
                 break;
-            case ImageCapture.FLASH_MODE_ON: flashBtn.setImageResource((R.drawable.flash_on));
+            case ImageCapture.FLASH_MODE_ON:
+                flashBtn.setImageResource((R.drawable.flash_on));
                 break;
         }
 
         // 타이머의 아이콘 설정
         switch (MainActivity.time) {
-            case 0: timerBtn.setImageResource(R.drawable.timer_off);
-                    break;
-            case 3000: timerBtn.setImageResource(R.drawable.timer_on3);
+            case 0:
+                timerBtn.setImageResource(R.drawable.timer_off);
                 break;
-            case 5000: timerBtn.setImageResource(R.drawable.timer_on5);
+            case 3000:
+                timerBtn.setImageResource(R.drawable.timer_on3);
                 break;
-            case 7000: timerBtn.setImageResource(R.drawable.timer_on7);
+            case 5000:
+                timerBtn.setImageResource(R.drawable.timer_on5);
+                break;
+            case 7000:
+                timerBtn.setImageResource(R.drawable.timer_on7);
                 break;
         }
 
@@ -93,7 +100,7 @@ public class PopActivity extends AppCompatActivity {
             }
         });
 
-         // 타이머 클릭 시 time의 시간 후에 사진 촬영 기능을 수행한다.
+        // 타이머 클릭 시 time의 시간 후에 사진 촬영 기능을 수행한다.
         timerBtn.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
@@ -112,6 +119,5 @@ public class PopActivity extends AppCompatActivity {
                 }
             }
         });
-
     }
 }

@@ -755,7 +755,7 @@ public class MainActivity extends AppCompatActivity {
                 .build();
 
         // 이미지 분석을 하려면 이미지 분석기가 필요하니 선언언
-       mImageAnalysisUseCase.setAnalyzer(ContextCompat.getMainExecutor(this),
+        mImageAnalysisUseCase.setAnalyzer(ContextCompat.getMainExecutor(this),
                 imageProxy -> mFaceProcessing.processImageProxy(imageProxy));
 
         mCameraProvider.bindToLifecycle(this, mCameraSelector, mImageAnalysisUseCase);
