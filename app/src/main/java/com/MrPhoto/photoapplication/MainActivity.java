@@ -22,6 +22,7 @@ import android.view.ViewGroup;
 import android.view.animation.AnimationUtils;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
@@ -129,6 +130,10 @@ public class MainActivity extends AppCompatActivity {
      */
     private View photoBtn;
     /**
+     * 화면에 타이머의 남은 시간을 출력해주는 필드
+     */
+    private TextView timerTv;
+    /**
      * 음소거 판단 필드
      */
     protected static int isMute = 0;
@@ -210,6 +215,7 @@ public class MainActivity extends AppCompatActivity {
         stikerBtn = findViewById(R.id.stikerBtn);
         photoBtn = findViewById(R.id.photoBtn);
         filterBtn = findViewById(R.id.filterBtn);
+        timerTv = findViewById(R.id.timerTv);
 
         graphicOverlay = findViewById(R.id.graphicOverlay);
         // endregion
@@ -455,21 +461,26 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 촬영 버튼 클릭 시 ]
         photoBtn.setOnClickListener(v -> {
+            if (time > 0) {
+                timerTv.setText(String.valueOf(time / 1000));
+            }
+
+            final int[] countTime = {time / 1000};
             CountDownTimer count = new CountDownTimer(time, 1000) {
                 @Override
                 public void onTick(long l) {
-                    // TODO 1초에 숫자 하나씩 줄어들도록 구현하기
+                    timerTv.setText(String.valueOf(countTime[0]));
+                    countTime[0]--;
                 }
 
                 @Override
                 public void onFinish() {
-                    new Thread(() -> {
-                        if (isMute == 0) {
-                            MediaActionSound sound = new MediaActionSound();
-                            sound.play(MediaActionSound.SHUTTER_CLICK);
-                        }
-                    }).start();
                     takePicture();
+                    if (isMute == 0) {
+                        MediaActionSound sound = new MediaActionSound();
+                        sound.play(MediaActionSound.SHUTTER_CLICK);
+                    }
+                    timerTv.setText("");
                 }
             }.start();
         });
