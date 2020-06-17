@@ -134,6 +134,14 @@ public class MainActivity extends AppCompatActivity {
      */
     private TextView timerTv;
     /**
+     * 즐겨찾기 버튼
+     */
+    private ImageView favorBtn;
+    /**
+     * 즐겨찾기 판단 여부
+     */
+    private int isFavor = 0;
+    /**
      * 음소거 판단 필드
      */
     protected static int isMute = 0;
@@ -216,6 +224,7 @@ public class MainActivity extends AppCompatActivity {
         photoBtn = findViewById(R.id.photoBtn);
         filterBtn = findViewById(R.id.filterBtn);
         timerTv = findViewById(R.id.timerTv);
+        favorBtn = findViewById(R.id.favorBtn);
 
         graphicOverlay = findViewById(R.id.graphicOverlay);
         // endregion
@@ -277,6 +286,20 @@ public class MainActivity extends AppCompatActivity {
         });
         // endregion
 
+        // 즐겨찾기 설정 버튼
+        favorBtn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                if (isFavor == 0) {
+                    isFavor = 1;
+                    favorBtn.setImageResource(R.drawable.favorite_on);
+                } else {
+                    isFavor = 0;
+                    favorBtn.setImageResource(R.drawable.favorite);
+                }
+            }
+        });
+
         // region [ 스티커 버튼 클릭 시 ]
         stikerBtn.setOnClickListener(v -> {
             // 동적으로 패널 추가
@@ -318,6 +341,7 @@ public class MainActivity extends AppCompatActivity {
             btnFav.setPadding(dp4, dp4, dp4, dp4);
             btnFav.setAdjustViewBounds(true);
             btnFav.setImageResource(R.drawable.favorite);
+
             btnFav.setOnClickListener(v12 -> {
                 listStiker.removeAllViews();
 
@@ -325,8 +349,10 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
+                // TODO 스티커의 스티커 유무 확인
+
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item01);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item02);
                 //즐겨찾기,전체 스티커 아이콘 계속 누르면 무한 생성됨. 수정할 부분
             });
 
@@ -461,6 +487,7 @@ public class MainActivity extends AppCompatActivity {
 
         // region [ 촬영 버튼 클릭 시 ]
         photoBtn.setOnClickListener(v -> {
+            // 타이머 여부 판단
             if (time > 0) {
                 timerTv.setText(String.valueOf(time / 1000));
             }
@@ -469,12 +496,15 @@ public class MainActivity extends AppCompatActivity {
             CountDownTimer count = new CountDownTimer(time, 1000) {
                 @Override
                 public void onTick(long l) {
+                    // 1초 지날 수록 타이머
                     timerTv.setText(String.valueOf(countTime[0]));
                     countTime[0]--;
                 }
 
                 @Override
                 public void onFinish() {
+                    // countDown이 끝나고 나서 실행할 부분
+                    // 사진 촬영, 음소거 판단, 타이머 숫자 리
                     takePicture();
                     if (isMute == 0) {
                         MediaActionSound sound = new MediaActionSound();
