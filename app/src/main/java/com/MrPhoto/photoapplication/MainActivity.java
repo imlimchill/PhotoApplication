@@ -5,7 +5,9 @@ import android.content.ContentValues;
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
+import android.graphics.Matrix;
 import android.media.Image;
 import android.media.MediaActionSound;
 import android.net.Uri;
@@ -27,12 +29,10 @@ import android.widget.Toast;
 
 import androidx.annotation.DrawableRes;
 import androidx.annotation.NonNull;
-import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.camera.core.CameraSelector;
 import androidx.camera.core.ImageAnalysis;
 import androidx.camera.core.ImageCapture;
-import androidx.camera.core.ImageCaptureException;
 import androidx.camera.core.ImageProxy;
 import androidx.camera.core.Preview;
 import androidx.camera.lifecycle.ProcessCameraProvider;
@@ -51,6 +51,8 @@ import com.google.mlkit.vision.face.Face;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStream;
+import java.nio.BufferUnderflowException;
 import java.nio.ByteBuffer;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -178,14 +180,13 @@ public class MainActivity extends AppCompatActivity {
     private Preview mPreviewUseCase;
     private ImageAnalysis mImageAnalysisUseCase;
     private ImageCapture mImageCaptureUseCase;
+    private List<GraphicOverlay.Graphic> mCaptureGraphic;
 
     private int mCurrentStickerResourceId;
     private FaceProcessing mFaceProcessing;
     private PreviewTransformation mPreviewTransformation;
 
     private File mOutputBaseDir;
-
-    private int mOrientation = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -232,8 +233,8 @@ public class MainActivity extends AppCompatActivity {
         // region [ 이벤트 리스너 등록 ]
 
         // region [ 설정 버튼 클릭 시 ]
-        settingBtn.setOnClickListener(view -> {
-            Intent intent = new Intent(getApplicationContext(), PopActivity.class);
+        settingBtn.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, PopActivity.class);
             startActivity(intent);
         });
         // endregion
@@ -572,7 +573,7 @@ public class MainActivity extends AppCompatActivity {
         int bottomHeight = topBottomFrameSize - topHeight;
         Log.d(TAG, String.format("Top Height: %dpx, Bottom Height: %dpx", topHeight, bottomHeight));
 
-        //4:3 or 16:9일때 topHeight 없애기
+        // 4:3 일 경우 상단 여백을 제거 하고, 16:9 일 때도 상단 여백 제거
         if (mScreenRatio == ScreenRatio.S4_3 || mScreenRatio == ScreenRatio.S16_9) {
             bottomHeight = topBottomFrameSize;
             topHeight = 0;
@@ -584,6 +585,7 @@ public class MainActivity extends AppCompatActivity {
             topHeight = 0;
         }
 
+        // 그래도, 여백공간이 안맞는 경우 하단 빈 여백 제거
         if (topHeight == 0 && bottomHeight < pnlBottomBtnHeight) {
             bottomHeight = 0;
             cameraHeight = mainHeight;
@@ -595,7 +597,7 @@ public class MainActivity extends AppCompatActivity {
 
         // 하단 여백 높이 및 색상 처리
         pnlBottom.getLayoutParams().height = bottomHeight;
-        pnlBottom.setBackgroundColor(Color.TRANSPARENT);
+        if (bottomHeight == 0) pnlBottom.setBackgroundColor(Color.TRANSPARENT);
 
         // 계산 완료 후 카메라 레이아웃의 여백 재 설정
         ConstraintLayout.LayoutParams pnlCameraLayoutParams = (ConstraintLayout.LayoutParams) pnlCamera.getLayoutParams();
@@ -636,17 +638,17 @@ public class MainActivity extends AppCompatActivity {
         stickerLayoutParams.height = imgSize;
 
         ImageView sticker = new ImageView(MainActivity.this);
+        sticker.setTag(resId);
         sticker.setLayoutParams(stickerLayoutParams);
         sticker.setPadding(dp4, dp4, dp4, dp4);
         sticker.setAdjustViewBounds(true);
         sticker.setImageResource(resId);
         sticker.setOnClickListener(v -> {
-            if (mImageAnalysisUseCase == null) {
+            if (mImageAnalysisUseCase == null)
                 bindAnalysisUseCase();
-                mCurrentStickerResourceId = resId;
-            } else {
 
-            }
+            // 현재 스티커 적용
+            mCurrentStickerResourceId = (int) v.getTag();
         });
         listSticker.addView(sticker);
     }
@@ -708,13 +710,13 @@ public class MainActivity extends AppCompatActivity {
 
         if (System.currentTimeMillis() > backKeyPressedTime + 2000) {
             backKeyPressedTime = System.currentTimeMillis();
-            Toast.makeText(this, "\'뒤로\' 버튼을 한번 더 누르면 종료됩니다.", Toast.LENGTH_SHORT).show();
-            return; //백버튼이 한 번만 눌리면 종료 안내 메시지가 뜬다.
+            Toast.makeText(this, "'뒤로' 버튼을 한번 더 누르면 종료됩니다.", Toast.LENGTH_SHORT).show();
+            return; // 백버튼이 한 번만 눌리면 종료 안내 메시지가 뜬다.
         }
 
-        /* 마지막으로 백버튼을 눌렀던 시간에 2초를 더해 현재시간과 비교 후,
-           마지막으로 백버튼을 눌렀던 시간이 2초가 지나지 않았으면 앱을 종료시킴.
-           (메시지가 유지되는 2초동안 백버튼을 한 번 더 누르면 앱 종료) */
+        // 마지막으로 백버튼을 눌렀던 시간에 2초를 더해 현재시간과 비교 후,
+        // 마지막으로 백버튼을 눌렀던 시간이 2초가 지나지 않았으면 앱을 종료시킴.
+        // (메시지가 유지되는 2초동안 백버튼을 한 번 더 누르면 앱 종료)
         if (System.currentTimeMillis() <= backKeyPressedTime + 2000) finish();
     }
 
@@ -730,7 +732,9 @@ public class MainActivity extends AppCompatActivity {
             return;
         }
 
-        mCameraSelector = new CameraSelector.Builder().requireLensFacing(mLensFacing).build();
+        mCameraSelector = new CameraSelector.Builder()
+                .requireLensFacing(mLensFacing)
+                .build();
 
         // 카메라 정보 가져오는 작업
         ListenableFuture<ProcessCameraProvider> cameraProviderFuture = ProcessCameraProvider.getInstance(this);
@@ -789,6 +793,10 @@ public class MainActivity extends AppCompatActivity {
             mFaceProcessing = null;
         }
 
+        if (graphicOverlay != null) {
+            graphicOverlay.clear();
+        }
+
         mFaceProcessing = new FaceProcessing(this, this::drawFaces);
 
         mImageAnalysisUseCase = new ImageAnalysis.Builder()
@@ -826,7 +834,6 @@ public class MainActivity extends AppCompatActivity {
         if (mImageCaptureUseCase != null) mCameraProvider.unbind(mImageCaptureUseCase);
 
         mImageCaptureUseCase = new ImageCapture.Builder()
-                .setTargetResolution(mPreviewSize)
                 .setTargetAspectRatioCustom(mAspectRatio)
                 .setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY)
                 .setFlashMode(flashMode)
@@ -847,14 +854,19 @@ public class MainActivity extends AppCompatActivity {
         if (mImageAnalysisUseCase != null) mImageAnalysisUseCase = null;
         if (mImageCaptureUseCase != null) mImageCaptureUseCase = null;
 
+        boolean faceProcessingTag = false;
+
         if (mFaceProcessing != null) {
             mFaceProcessing.stop();
             mFaceProcessing = null;
+            faceProcessingTag = true;
         }
 
         if (graphicOverlay != null) {
             graphicOverlay.clear();
         }
+
+        if (faceProcessingTag) bindAnalysisUseCase();
     }
 
     /**
@@ -865,75 +877,10 @@ public class MainActivity extends AppCompatActivity {
 
         String imageFileName = "MrPhoto_" + new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.KOREA).format(new Date()) + ".jpg";
 
-        // region [ Android Q 이상 API 에서의 사진 처리 ]
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            takePictureOverAndroidQ(imageFileName);
-        }
-        // endregion
+        mCaptureGraphic = null;
+        if (mImageAnalysisUseCase != null) mCaptureGraphic = graphicOverlay.getChildView();
 
-        // region [ Android Q 미만 API 에서의 사진 처리 ]
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            takePictureUnderAndroidQ(imageFileName);
-        }
-        // endregion
-    }
-
-    /**
-     * Android Q 이상일 때의 사진 촬영
-     */
-    private void takePictureOverAndroidQ(String imageFileName) {
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) return;
-
-        ContentValues contentValues = new ContentValues();
-        contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, imageFileName);
-        contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
-        contentValues.put(MediaStore.Images.Media.IS_PENDING, 1);
-        contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/MrPhoto");
-
-        ImageCapture.Metadata metaData = new ImageCapture.Metadata();
-
-        ImageCapture.OutputFileOptions outputFileOptions = new ImageCapture.OutputFileOptions.Builder(getContentResolver(), MediaStore.Images.Media.EXTERNAL_CONTENT_URI, contentValues)
-                .setMetadata(metaData)
-                .build();
-
-        mImageCaptureUseCase.takePicture(outputFileOptions, Executors.newSingleThreadExecutor(), new ImageCapture.OnImageSavedCallback() {
-            @RequiresApi(api = Build.VERSION_CODES.Q)
-            @Override
-            public void onImageSaved(@NonNull ImageCapture.OutputFileResults outputFileResults) {
-                Uri savedUri = outputFileResults.getSavedUri();
-                if (savedUri == null) return;
-
-                // 사진 저장이 완료되었다고 resolver 에게 통보
-                contentValues.clear();
-                contentValues.put(MediaStore.Images.Media.IS_PENDING, 0);
-                getContentResolver().update(savedUri, contentValues, null, null);
-
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 찍었습니다.", Toast.LENGTH_SHORT).show());
-            }
-
-            @Override
-            public void onError(@NonNull ImageCaptureException exception) {
-                Log.w(TAG, exception.getMessage(), exception);
-            }
-        });
-    }
-
-    /**
-     * Android Q 미만일 때의 사진 촬영
-     */
-    private void takePictureUnderAndroidQ(String imageFileName) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) return;
-
-        File imageFile = new File(getOutputDirectory(), imageFileName);
-
-        try {
-            if (!imageFile.createNewFile()) throw new IOException("파일 생성에 실패 했습니다.");
-        } catch (IOException e) {
-            Log.w(TAG, e.getMessage(), e);
-            Toast.makeText(this, e.getMessage(), Toast.LENGTH_SHORT).show();
-        }
-
-        mImageCaptureUseCase.takePicture(ContextCompat.getMainExecutor(this), new ImageCapture.OnImageCapturedCallback() {
+        mImageCaptureUseCase.takePicture(Executors.newSingleThreadExecutor(), new ImageCapture.OnImageCapturedCallback() {
             @Override
             @SuppressLint("UnsafeExperimentalUsageError")
             public void onCaptureSuccess(@NonNull ImageProxy imageProxy) {
@@ -945,27 +892,102 @@ public class MainActivity extends AppCompatActivity {
                 byte[] bytes = new byte[byteBuffer.capacity()];
                 byteBuffer.get(bytes);
 
-                // 가져온 바이트 배열 이미지 파일에 저장
-                try (FileOutputStream fos = new FileOutputStream(imageFile)) {
-                    fos.write(bytes);
-                } catch (IOException e) {
-                    runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 저장하는데 실패 했습니다.", Toast.LENGTH_SHORT).show());
-                    return;
-                }
+                // 이미지 회전 (정상 방향으로)
+                int rotationDegrees = imageProxy.getImageInfo().getRotationDegrees();
+                Bitmap imageBitmap = BitmapFactory.decodeByteArray(bytes, 0, bytes.length);
+                Matrix matrix = new Matrix();
+                matrix.postRotate(rotationDegrees);
+                imageBitmap = Bitmap.createBitmap(imageBitmap, 0, 0, imageBitmap.getWidth(), imageBitmap.getHeight(), matrix, true);
 
-                // 이미지 사용을 다 한 후 종료
+                // 이미지 종료
+                image.close();
                 imageProxy.close();
 
-                // 새로운 이미지가 저장 되었다는 broadcast 전송
-                sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(imageFile)));
+                // 촬영한 사진 결과 비트맵에 저장
+                Bitmap resultBitmap = Bitmap.createBitmap(imageBitmap.getWidth(), imageBitmap.getHeight(), Bitmap.Config.ARGB_8888);
+                Canvas canvas = new Canvas(resultBitmap);
+                canvas.drawBitmap(imageBitmap, 0, 0, null);
 
-                // 새로운 이미지 촬영 완료 Toast 전송
-                runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진 촬영을 완료 했습니다.", Toast.LENGTH_SHORT).show());
-            }
+                // 스티커가 있는 경우 결과 비트맵에 삽입
+                if (mCaptureGraphic != null) {
+                    for (GraphicOverlay.Graphic graphic : mCaptureGraphic) {
+                        if (graphic instanceof FaceGraphic) {
+                            FaceGraphic faceGraphic = (FaceGraphic) graphic;
+                            faceGraphic.drawSticker(canvas, false);
+                        }
+                    }
+                }
 
-            @Override
-            public void onError(@NonNull ImageCaptureException exception) {
-                Log.e(TAG, exception.getMessage(), exception);
+                // region [ 안드로이드 Q 이상 인 경우 사진 저장 방법 ]
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                    ContentValues contentValues = new ContentValues();
+                    contentValues.put(MediaStore.Images.Media.DISPLAY_NAME, imageFileName);
+                    contentValues.put(MediaStore.Images.Media.MIME_TYPE, "image/*");
+                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 1);
+                    contentValues.put(MediaStore.MediaColumns.RELATIVE_PATH, "Pictures/MrPhoto");
+
+                    Uri contentUri = MediaStore.Images.Media.EXTERNAL_CONTENT_URI;
+                    Uri savedUri = getContentResolver().insert(contentUri, contentValues);
+
+                    if (savedUri == null) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "MediaStore 레코드를 생성하는데 실패 했습니다.", Toast.LENGTH_SHORT).show());
+                        return;
+                    }
+
+                    try (OutputStream os = getContentResolver().openOutputStream(savedUri)) {
+                        if (os == null) throw new IOException("파일 스트림을 열 수 없습니다.");
+
+                        boolean result = resultBitmap.compress(Bitmap.CompressFormat.JPEG, 100, os);
+                        if (!result) throw new IOException("파일 생성에 실패 했습니다.");
+
+                    } catch (IOException e) {
+                        Log.e(TAG, e.getMessage(), e);
+                        getContentResolver().delete(savedUri, null, null);
+                        return;
+                    }
+
+                    contentValues.clear();
+                    contentValues.put(MediaStore.Images.Media.IS_PENDING, 0);
+                    getContentResolver().update(savedUri, contentValues, null, null);
+                }
+
+                // endregion
+
+                // region [ 안드로이드 Q 미만 인 경우 사진 저장 방법 ]
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                    int size = resultBitmap.getRowBytes() * resultBitmap.getHeight();
+                    byteBuffer = ByteBuffer.allocate(size);
+                    resultBitmap.copyPixelsToBuffer(byteBuffer);
+                    bytes = new byte[size];
+                    try {
+                        byteBuffer.get(bytes, 0, bytes.length);
+                    } catch (BufferUnderflowException e) {
+                        // always handle
+                    }
+
+                    File imageFile = new File(getOutputDirectory(), imageFileName);
+                    try {
+                        if (!imageFile.createNewFile()) throw new IOException("파일 생성에 실패 했습니다.");
+                    } catch (IOException e) {
+                        Log.w(TAG, e.getMessage(), e);
+                        Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        return;
+                    }
+
+                    // 가져온 바이트 배열 이미지 파일에 저장
+                    try (FileOutputStream fos = new FileOutputStream(imageFile)) {
+                        fos.write(bytes);
+                    } catch (IOException e) {
+                        runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 저장하는데 실패 했습니다.", Toast.LENGTH_SHORT).show());
+                        return;
+                    }
+
+                    // 새로운 이미지가 저장 되었다는 broadcast 전송
+                    sendBroadcast(new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE, Uri.fromFile(imageFile)));
+                }
+                // endregion
+
+                runOnUiThread(() -> Toast.makeText(MainActivity.this, "사진을 찍었습니다.", Toast.LENGTH_SHORT).show());
             }
         });
     }
@@ -998,7 +1020,7 @@ public class MainActivity extends AppCompatActivity {
 
         for (Face face : faces) {
             Bitmap sticker = BitmapFactory.decodeResource(getResources(), mCurrentStickerResourceId);
-            graphicOverlay.add(new FaceGraphic(graphicOverlay, face, sticker));
+            graphicOverlay.add(new FaceGraphic(graphicOverlay, face, sticker, new Size(originalCameraImage.getWidth(), originalCameraImage.getHeight())));
         }
     }
 

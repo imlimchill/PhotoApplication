@@ -1,6 +1,5 @@
 package com.MrPhoto.photoapplication;
 
-// opencsv와 관련된 import
 import com.opencsv.CSVReader;
 import com.opencsv.CSVWriter;
 import com.opencsv.exceptions.CsvException;
@@ -130,24 +129,24 @@ public class OpenCsv {
         writer.close();
     }
 
-//    public static void main(String[] args) throws IOException, CsvException {
-//        // csv 파일의 수정을 하기 위한 메소드가 선언된 클래스 선언
-//        OpenCsv csv = new OpenCsv();
-//
-//        // 1) 현재 sticker.csv 파일의 목록 확인
-//        csv.readData("app/src/main/assets/sticker.csv");
-//
-//        // list 선언 후 sticker.csv 파일의 목록 반환받기
-//        List<String[]> list = new ArrayList<>();
-//        list = csv.readAll("app/src/main/assets/sticker.csv");
-//
-//        // 2) 새로운 내용(R_011)의 추가
-//        csv.addData("app/src/main/assets/sticker.csv", "R_011", list);
-//        csv.readData("app/src/main/assets/sticker.csv");
-//
-//        // 3) 내용(R_004)의 삭제
-//        csv.removeData("app/src/main/assets/sticker.csv", "R_005", list);
-//        csv.readData("app/src/main/assets/sticker.csv");
-//
-//    }
+    //    public static void main(String[] args) throws IOException, CsvException {
+    //        // csv 파일의 수정을 하기 위한 메소드가 선언된 클래스 선언
+    //        OpenCsv csv = new OpenCsv();
+    //
+    //        // 1) 현재 sticker.csv 파일의 목록 확인
+    //        csv.readData("app/src/main/assets/sticker.csv");
+    //
+    //        // list 선언 후 sticker.csv 파일의 목록 반환받기
+    //        List<String[]> list = new ArrayList<>();
+    //        list = csv.readAll("app/src/main/assets/sticker.csv");
+    //
+    //        // 2) 새로운 내용(R_011)의 추가
+    //        csv.addData("app/src/main/assets/sticker.csv", "R_011", list);
+    //        csv.readData("app/src/main/assets/sticker.csv");
+    //
+    //        // 3) 내용(R_004)의 삭제
+    //        csv.removeData("app/src/main/assets/sticker.csv", "R_005", list);
+    //        csv.readData("app/src/main/assets/sticker.csv");
+    //
+    //    }
 }

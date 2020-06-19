@@ -45,19 +45,19 @@ public class FaceProcessing {
     }
 
     @SuppressLint("UnsafeExperimentalUsageError")
-    public void processImageProxy(ImageProxy image) {
-        if (image == null) return;
+    public void processImageProxy(ImageProxy imageProxy) {
+        if (imageProxy == null) return;
 
         if (isShutdown) {
-            image.close();
+            imageProxy.close();
             return;
         }
 
-        Bitmap bitmap = BitmapUtils.getBitmap(image);
+        Bitmap bitmap = BitmapUtils.getBitmap(imageProxy);
 
         requestDetectInImage(
-                InputImage.fromMediaImage(Objects.requireNonNull(image.getImage()), image.getImageInfo().getRotationDegrees()), bitmap)
-                .addOnCompleteListener(results -> image.close());
+                InputImage.fromMediaImage(Objects.requireNonNull(imageProxy.getImage()), imageProxy.getImageInfo().getRotationDegrees()), bitmap)
+                .addOnCompleteListener(results -> imageProxy.close());
     }
 
     private Task<List<Face>> requestDetectInImage(final InputImage image, final Bitmap originalCameraImage) {

@@ -2,7 +2,9 @@ package com.MrPhoto.photoapplication.graphic;
 
 import android.content.Context;
 import android.graphics.Canvas;
+import android.graphics.Rect;
 import android.util.AttributeSet;
+import android.util.Size;
 import android.view.View;
 
 import androidx.annotation.Nullable;
@@ -38,7 +40,6 @@ public class GraphicOverlay extends View {
         return yRatio;
     }
 
-    //
     public void clear() {
         synchronized (lock) {
             graphics.clear();
@@ -57,6 +58,20 @@ public class GraphicOverlay extends View {
             graphics.remove(graphic);
         }
         postInvalidate();
+    }
+
+    public List<Graphic> getChildView() {
+        synchronized (lock) {
+            List<Graphic> children = new ArrayList<>();
+
+            for (Graphic graphic : graphics) {
+                if (graphic instanceof FaceGraphic) {
+                    children.add(new FaceGraphic((FaceGraphic) graphic));
+                }
+            }
+
+            return children;
+        }
     }
 
     @Override
@@ -83,6 +98,10 @@ public class GraphicOverlay extends View {
         }
 
         public abstract void draw(Canvas canvas);
+
+        public abstract Size getSize();
+
+        public abstract Rect getBoundingBox();
 
         public float xScale(float pixel) {
             return pixel * overlay.getXRatio();
