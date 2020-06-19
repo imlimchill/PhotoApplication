@@ -10,15 +10,12 @@ public class SplashActivity extends AppCompatActivity {
 
     /** 시간초를 선언해 자동으로 넘어갈 수 있도록 해주는 클래스 */
     Handler handler = new Handler();
-    Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            // handler로 설정해둔 시간이 끝났을 때 MainActivity로 넘어갈 수 있게해준다.
-            Intent intent = new Intent(getApplicationContext(), MainActivity.class);
-            startActivity(intent);
-            // splash 화면은 필요가 없기때문에 finish해준다.
-            finish();
-        }
+    Runnable runnable = () -> {
+        // handler로 설정해둔 시간이 끝났을 때 MainActivity로 넘어갈 수 있게해준다.
+        Intent intent = new Intent(getApplicationContext(), MainActivity.class);
+        startActivity(intent);
+        // splash 화면은 필요가 없기때문에 finish해준다.
+        finish();
     };
 
     @Override
