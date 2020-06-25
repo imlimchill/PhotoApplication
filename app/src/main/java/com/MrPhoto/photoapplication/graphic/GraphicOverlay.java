@@ -9,6 +9,8 @@ import android.view.View;
 
 import androidx.annotation.Nullable;
 
+import com.MrPhoto.photoapplication.util.MatrixTransformation;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -17,27 +19,17 @@ public class GraphicOverlay extends View {
     private final Object lock = new Object();
     private final List<Graphic> graphics = new ArrayList<>();
 
-    private float xRatio;
-    private float yRatio;
+    private MatrixTransformation matrixTransformation;
 
     public GraphicOverlay(Context context, @Nullable AttributeSet attrs) {
         super(context, attrs);
     }
 
-    public void setRatio(float xRatio, float yRatio) {
+    public void setMatrixTransformation(MatrixTransformation matrixTransformation) {
         synchronized (lock) {
-            this.xRatio = xRatio;
-            this.yRatio = yRatio;
+            this.matrixTransformation = matrixTransformation;
         }
         postInvalidate();
-    }
-
-    public float getXRatio() {
-        return xRatio;
-    }
-
-    public float getYRatio() {
-        return yRatio;
     }
 
     public void clear() {
@@ -81,7 +73,7 @@ public class GraphicOverlay extends View {
         synchronized (lock) {
 
             for (Graphic graphic : graphics) {
-                graphic.draw(canvas);
+                graphic.draw(canvas, matrixTransformation);
             }
         }
     }
@@ -97,19 +89,11 @@ public class GraphicOverlay extends View {
             return overlay.getContext().getApplicationContext();
         }
 
-        public abstract void draw(Canvas canvas);
+        public abstract void draw(Canvas canvas, @Nullable MatrixTransformation matrixTransformation);
 
         public abstract Size getSize();
 
         public abstract Rect getBoundingBox();
-
-        public float xScale(float pixel) {
-            return pixel * overlay.getXRatio();
-        }
-
-        public float yScale(float pixel) {
-            return pixel * overlay.getYRatio();
-        }
 
         public void postInvalidate() {
             overlay.postInvalidate();

@@ -42,6 +42,7 @@ import androidx.core.content.ContextCompat;
 
 import com.MrPhoto.photoapplication.graphic.FaceGraphic;
 import com.MrPhoto.photoapplication.graphic.GraphicOverlay;
+import com.MrPhoto.photoapplication.util.MatrixTransformation;
 import com.MrPhoto.photoapplication.util.Utils;
 import com.google.android.flexbox.FlexboxLayout;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -184,7 +185,7 @@ public class MainActivity extends AppCompatActivity {
 
     private int mCurrentStickerResourceId;
     private FaceProcessing mFaceProcessing;
-    private PreviewTransformation mPreviewTransformation;
+    private MatrixTransformation mPreviewMatrixTransformation;
 
     private File mOutputBaseDir;
 
@@ -262,7 +263,7 @@ public class MainActivity extends AppCompatActivity {
             }
 
             mScreenRatio = mScreenRatios.get(nextIndex);
-            mPreviewTransformation = null;
+            mPreviewMatrixTransformation = null;
 
             onWindowFocusChanged(true);
         });
@@ -287,19 +288,17 @@ public class MainActivity extends AppCompatActivity {
         });
         // endregion
 
-        // 즐겨찾기 설정 버튼
-        favorBtn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                if (isFavor == 0) {
-                    isFavor = 1;
-                    favorBtn.setImageResource(R.drawable.favorite_on);
-                } else {
-                    isFavor = 0;
-                    favorBtn.setImageResource(R.drawable.favorite);
-                }
+        // region [ 즐겨찾기 설정 버튼 ]
+        favorBtn.setOnClickListener(view -> {
+            if (isFavor == 0) {
+                isFavor = 1;
+                favorBtn.setImageResource(R.drawable.favorite_on);
+            } else {
+                isFavor = 0;
+                favorBtn.setImageResource(R.drawable.favorite);
             }
         });
+        // endregion
 
         // region [ 스티커 버튼 클릭 시 ]
         stikerBtn.setOnClickListener(v -> {
@@ -569,7 +568,7 @@ public class MainActivity extends AppCompatActivity {
         Log.d(TAG, String.format("Top Btn Panel Height: %dpx, Bottom Btn Panel Height: %dpx", pnlTopBtnHeight, pnlBottomBtnHeight));
 
         // 남은 공간 2:3 비율로 나눈 결과 측정
-        int topHeight = (int) (topBottomFrameSize * (2.0 / 5.0));
+        int topHeight = (int) (topBottomFrameSize * (1.2 / 5.0));
         int bottomHeight = topBottomFrameSize - topHeight;
         Log.d(TAG, String.format("Top Height: %dpx, Bottom Height: %dpx", topHeight, bottomHeight));
 
@@ -616,6 +615,9 @@ public class MainActivity extends AppCompatActivity {
             ((ConstraintLayout.LayoutParams) pnlTopBtn.getLayoutParams()).topMargin = (topHeight - pnlTopBtnHeight) / 2;
         if (bottomHeight - pnlBottomBtnHeight > 0)
             ((ConstraintLayout.LayoutParams) pnlBottomBtn.getLayoutParams()).bottomMargin = (bottomHeight - pnlBottomBtnHeight) / 2;
+
+        // 즐겨찾기 버튼 위치 조정
+        ((ConstraintLayout.LayoutParams) favorBtn.getLayoutParams()).bottomToTop = bottomHeight != 0 ? R.id.pnlBottom : R.id.pnlBottomBtn;
 
         // 카메라 프리뷰 크기 가져오기
         mCameraPreviewView = (PreviewView) pnlCamera;
@@ -887,6 +889,8 @@ public class MainActivity extends AppCompatActivity {
                 Image image = imageProxy.getImage();
                 if (image == null) throw new RuntimeException("이미지가 없습니다.");
 
+                Log.d(TAG, "Image Width: " + image.getWidth() + "px, Image Height: " + image.getHeight() + "px, Rotation: " + imageProxy.getImageInfo().getRotationDegrees());
+
                 // 이미지 프록시에서 바이트 버퍼 가져오기
                 ByteBuffer byteBuffer = image.getPlanes()[0].getBuffer();
                 byte[] bytes = new byte[byteBuffer.capacity()];
@@ -908,12 +912,21 @@ public class MainActivity extends AppCompatActivity {
                 Canvas canvas = new Canvas(resultBitmap);
                 canvas.drawBitmap(imageBitmap, 0, 0, null);
 
+                Log.d(TAG, "Canvas Width: " + canvas.getWidth() + "px, Canvas Height: " + canvas.getHeight() + "px");
+
                 // 스티커가 있는 경우 결과 비트맵에 삽입
                 if (mCaptureGraphic != null) {
+                    Size recognizedSize = mPreviewMatrixTransformation.getDestination();
+                    MatrixTransformation matrixTransformation = new MatrixTransformation(
+                            new Size(canvas.getWidth(), canvas.getHeight()),
+                            recognizedSize,
+                            0
+                    );
+
                     for (GraphicOverlay.Graphic graphic : mCaptureGraphic) {
                         if (graphic instanceof FaceGraphic) {
                             FaceGraphic faceGraphic = (FaceGraphic) graphic;
-                            faceGraphic.drawSticker(canvas, false);
+                            faceGraphic.drawSticker(canvas, matrixTransformation);
                         }
                     }
                 }
@@ -1006,14 +1019,14 @@ public class MainActivity extends AppCompatActivity {
         // Log.d(TAG, "Image Width: " + inputImage.getWidth() + ", Image Height: " + inputImage.getHeight() + ", Rotation: " + inputImage.getRotationDegrees());
 
         // 뷰사이즈랑 이미지 사이지가 다르니 맞춰주기
-        if (mPreviewTransformation == null) {
-            mPreviewTransformation = new PreviewTransformation(
+        if (mPreviewMatrixTransformation == null) {
+            mPreviewMatrixTransformation = new MatrixTransformation(
                     /* 뷰 사이즈 = */ new Size(graphicOverlay.getMeasuredWidth(), graphicOverlay.getMeasuredHeight()),
                     /* 이미지 사이즈 = */ new Size(inputImage.getWidth(), inputImage.getHeight()),
                     /* 이미지 회전 체크 = */ inputImage.getRotationDegrees()
             );
 
-            graphicOverlay.setRatio(mPreviewTransformation.getXRatio(), mPreviewTransformation.getYRatio());
+            graphicOverlay.setMatrixTransformation(mPreviewMatrixTransformation);
         }
 
         if (mCurrentStickerResourceId == 0) return;
@@ -1021,32 +1034,6 @@ public class MainActivity extends AppCompatActivity {
         for (Face face : faces) {
             Bitmap sticker = BitmapFactory.decodeResource(getResources(), mCurrentStickerResourceId);
             graphicOverlay.add(new FaceGraphic(graphicOverlay, face, sticker, new Size(originalCameraImage.getWidth(), originalCameraImage.getHeight())));
-        }
-    }
-
-    /**
-     * 프리뷰의 비율과 이미지의 비율을 계산하는 클래스
-     */
-    public static class PreviewTransformation {
-        float xRatio;
-        float yRatio;
-
-        public PreviewTransformation(Size viewSize, Size imageSize, int rotationDegree) {
-            if (rotationDegree == 0 || rotationDegree == 180) {
-                xRatio = (float) viewSize.getWidth() / imageSize.getWidth();
-                yRatio = (float) viewSize.getHeight() / imageSize.getHeight();
-            } else {
-                xRatio = (float) viewSize.getWidth() / imageSize.getHeight();
-                yRatio = (float) viewSize.getHeight() / imageSize.getWidth();
-            }
-        }
-
-        public float getXRatio() {
-            return xRatio;
-        }
-
-        public float getYRatio() {
-            return yRatio;
         }
     }
 
