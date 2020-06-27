@@ -103,20 +103,6 @@
 
     </LinearLayout>
 
-    <!-- 즐겨찾기 버튼 -->
-    <ImageView
-        android:id="@+id/favorBtn"
-        android:layout_width="50dp"
-        android:layout_height="50dp"
-        android:layout_gravity="center"
-        android:layout_marginEnd="20dp"
-        android:layout_marginBottom="20dp"
-        android:adjustViewBounds="true"
-        android:src="@drawable/favorite"
-        app:layout_constraintBottom_toTopOf="@id/pnlBottomBtn"
-        app:layout_constraintRight_toRightOf="parent"
-        tools:ignore="ContentDescription" />
-
     <!-- 하단 버튼 -->
     <LinearLayout
         android:id="@+id/pnlBottomBtn"
