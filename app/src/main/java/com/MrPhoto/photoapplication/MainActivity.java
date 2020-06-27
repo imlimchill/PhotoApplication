@@ -137,10 +137,6 @@ public class MainActivity extends AppCompatActivity {
      */
     private TextView timerTv;
     /**
-     * 즐겨찾기 버튼
-     */
-    private ImageView favorBtn;
-    /**
      * 즐겨찾기 판단 여부
      */
     private int isFavor = 0;
@@ -226,7 +222,6 @@ public class MainActivity extends AppCompatActivity {
         photoBtn = findViewById(R.id.photoBtn);
         filterBtn = findViewById(R.id.filterBtn);
         timerTv = findViewById(R.id.timerTv);
-        favorBtn = findViewById(R.id.favorBtn);
 
         graphicOverlay = findViewById(R.id.graphicOverlay);
         // endregion
@@ -285,18 +280,6 @@ public class MainActivity extends AppCompatActivity {
 
             // GraphicOverlay clear
             if (graphicOverlay != null) graphicOverlay.clear();
-        });
-        // endregion
-
-        // region [ 즐겨찾기 설정 버튼 ]
-        favorBtn.setOnClickListener(view -> {
-            if (isFavor == 0) {
-                isFavor = 1;
-                favorBtn.setImageResource(R.drawable.favorite_on);
-            } else {
-                isFavor = 0;
-                favorBtn.setImageResource(R.drawable.favorite);
-            }
         });
         // endregion
 
@@ -616,8 +599,6 @@ public class MainActivity extends AppCompatActivity {
         if (bottomHeight - pnlBottomBtnHeight > 0)
             ((ConstraintLayout.LayoutParams) pnlBottomBtn.getLayoutParams()).bottomMargin = (bottomHeight - pnlBottomBtnHeight) / 2;
 
-        // 즐겨찾기 버튼 위치 조정
-        ((ConstraintLayout.LayoutParams) favorBtn.getLayoutParams()).bottomToTop = bottomHeight != 0 ? R.id.pnlBottom : R.id.pnlBottomBtn;
 
         // 카메라 프리뷰 크기 가져오기
         mCameraPreviewView = (PreviewView) pnlCamera;
