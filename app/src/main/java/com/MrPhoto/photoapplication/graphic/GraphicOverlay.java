@@ -36,16 +36,20 @@ public class GraphicOverlay extends View {
 
     public void clearFilterGraphic() {
         synchronized (lock) {
+            Graphic filterGraphic = null;
             for (Graphic graphic : graphics)
-                if (graphic instanceof FilterGraphic) remove(graphic);
+                if (graphic instanceof FilterGraphic) filterGraphic = graphic;
+            if (filterGraphic != null) graphics.remove(filterGraphic);
         }
         postInvalidate();
     }
 
     public void clearFaceGraphic() {
         synchronized (lock) {
+            List<Graphic> faceGraphics = new ArrayList<>();
             for (Graphic graphic : graphics)
-                if (graphic instanceof FaceGraphic) remove(graphic);
+                if (graphic instanceof FaceGraphic) faceGraphics.add(graphic);
+            graphics.removeAll(faceGraphics);
         }
         postInvalidate();
     }
