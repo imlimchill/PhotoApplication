@@ -34,7 +34,7 @@
                 tools:ignore="RtlSymmetry">
 
                 <ImageView
-                    android:id="@+id/btnStickerNone"
+                    android:id="@+id/btn_sticker_none"
                     android:layout_width="40dp"
                     android:layout_height="40dp"
                     android:layout_marginEnd="5dp"

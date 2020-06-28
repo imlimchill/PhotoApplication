@@ -2,9 +2,7 @@ package com.MrPhoto.photoapplication.graphic;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Size;
 import android.view.View;
 
 import androidx.annotation.Nullable;
@@ -13,6 +11,8 @@ import com.MrPhoto.photoapplication.util.MatrixTransformation;
 
 import java.util.ArrayList;
 import java.util.List;
+
+//그래픽을 그려주는 공간 즉, 캔버스
 
 public class GraphicOverlay extends View {
 
@@ -33,12 +33,30 @@ public class GraphicOverlay extends View {
     }
 
     public void clear() {
+        graphics.clear();
+    }
+    //필터 그래픽을 완전 없앰
+    //lock을 걸어주는건 임계영역문제를 해결하기 위해
+    public void clearFilterGraphic() {
         synchronized (lock) {
-            graphics.clear();
+            Graphic filterGraphic = null;
+            for (Graphic graphic : graphics)
+                if (graphic instanceof FilterGraphic) filterGraphic = graphic;
+            if (filterGraphic != null) graphics.remove(filterGraphic);
         }
         postInvalidate();
     }
-
+    //페이스그래픽을 완전 없앰
+    public void clearFaceGraphic() {
+        synchronized (lock) {
+            List<Graphic> faceGraphics = new ArrayList<>();
+            for (Graphic graphic : graphics)
+                if (graphic instanceof FaceGraphic) faceGraphics.add(graphic);
+            graphics.removeAll(faceGraphics);
+        }
+        postInvalidate();
+    }
+    //그래픽 추가
     public void add(Graphic graphic) {
         synchronized (lock) {
             graphics.add(graphic);
@@ -52,7 +70,7 @@ public class GraphicOverlay extends View {
         postInvalidate();
     }
 
-    public List<Graphic> getChildView() {
+    public List<Graphic> getFaceGraphicViews() {
         synchronized (lock) {
             List<Graphic> children = new ArrayList<>();
 
@@ -66,12 +84,20 @@ public class GraphicOverlay extends View {
         }
     }
 
+    public Graphic getFilterGraphicView() {
+        synchronized (lock) {
+            for (Graphic graphic : graphics) {
+                if (graphic instanceof FilterGraphic) {
+                    return graphic;
+                }
+            }
+            return null;
+        }
+    }
+    //캔버스에 그리기 위한 메소드
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
         synchronized (lock) {
-
             for (Graphic graphic : graphics) {
                 graphic.draw(canvas, matrixTransformation);
             }
@@ -79,25 +105,12 @@ public class GraphicOverlay extends View {
     }
 
     public abstract static class Graphic {
-        private GraphicOverlay overlay;
+        public Graphic() {
 
-        public Graphic(GraphicOverlay overlay) {
-            this.overlay = overlay;
-        }
-
-        public Context getApplicationContext() {
-            return overlay.getContext().getApplicationContext();
         }
 
         public abstract void draw(Canvas canvas, @Nullable MatrixTransformation matrixTransformation);
-
-        public abstract Size getSize();
-
-        public abstract Rect getBoundingBox();
-
-        public void postInvalidate() {
-            overlay.postInvalidate();
-        }
     }
+
 }
 

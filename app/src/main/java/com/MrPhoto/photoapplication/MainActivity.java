@@ -41,6 +41,7 @@ import androidx.constraintlayout.widget.ConstraintLayout;
 import androidx.core.content.ContextCompat;
 
 import com.MrPhoto.photoapplication.graphic.FaceGraphic;
+import com.MrPhoto.photoapplication.graphic.FilterGraphic;
 import com.MrPhoto.photoapplication.graphic.GraphicOverlay;
 import com.MrPhoto.photoapplication.util.MatrixTransformation;
 import com.MrPhoto.photoapplication.util.Utils;
@@ -279,7 +280,7 @@ public class MainActivity extends AppCompatActivity {
             bindAllCameraUseCases();
 
             // GraphicOverlay clear
-            if (graphicOverlay != null) graphicOverlay.clear();
+            if (graphicOverlay != null) graphicOverlay.clearFaceGraphic();
         });
         // endregion
 
@@ -311,11 +312,11 @@ public class MainActivity extends AppCompatActivity {
             btnStickerButtonLayoutParams.setMarginEnd(dp12);
 
             // 스티커 해제 버튼
-            View btnStickerNone = pnlStiker.findViewById(R.id.btnStickerNone);
+            View btnStickerNone = pnlStiker.findViewById(R.id.btn_sticker_none);
             btnStickerNone.setOnClickListener(v17 -> {
                 unBindAnalysisUseCase();
                 mCurrentStickerResourceId = 0;
-                graphicOverlay.clear();
+                graphicOverlay.clearFaceGraphic();
             });
 
             // 즐겨찾기 스티커 버튼
@@ -332,11 +333,7 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                // TODO 스티커의 스티커 유무 확인
 
-                addSticker(stikerLayoutParams, listStiker, R.drawable.item01);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.item02);
-                //즐겨찾기,전체 스티커 아이콘 계속 누르면 무한 생성됨. 수정할 부분
             });
 
             listStikerItems.addView(btnFav);
@@ -353,48 +350,17 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item01);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item06);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item07);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item08);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item09);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item10);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item11);
             });
 
             listStikerItems.addView(btnSticker1);
 
-            // 첫번째 스티커 리스트 추가
-            ImageView sDoraemong = new ImageView(MainActivity.this);
-            sDoraemong.setLayoutParams(btnStickerButtonLayoutParams);
-            sDoraemong.setPadding(dp4, dp4, dp4, dp4);
-            sDoraemong.setAdjustViewBounds(true);
-            sDoraemong.setImageResource(R.drawable.s_do);
-            sDoraemong.setOnClickListener(v15 -> {
-                listStiker.removeAllViews();
-
-                FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
-                stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
-
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_1);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_2);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_3);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_4);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_5);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_6);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_7);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_8);
-            });
-
-            listStikerItems.addView(sDoraemong);
 
             // 기본으로 첫번째 스티커 를 먼저 자동으로 클릭
             btnSticker1.performClick();
@@ -415,7 +381,11 @@ public class MainActivity extends AppCompatActivity {
             pnlFilter.setBackgroundColor(Color.TRANSPARENT);
 
             View filterBack = pnlFilter.findViewById(R.id.filterBack);
-            filterBack.setOnClickListener(v14 -> MainActivity.this.onBackPressed());
+            filterBack.setOnClickListener(v1 -> MainActivity.this.onBackPressed());
+
+            // 필터 해제 버튼
+            View btnFilterNone = pnlFilter.findViewById(R.id.btn_filter_none);
+            btnFilterNone.setOnClickListener(v2 -> graphicOverlay.clearFilterGraphic());
 
             // 필터 버튼의 리스트
             LinearLayout listFilterItems = pnlFilter.findViewById(R.id.list_filter_items);
@@ -427,7 +397,7 @@ public class MainActivity extends AppCompatActivity {
             LinearLayout.LayoutParams btnFilterButtonLayoutParams = new LinearLayout.LayoutParams(dp40, dp40);
             btnFilterButtonLayoutParams.setMarginEnd(dp12);
 
-            //즐겨찾기 필터 버튼
+            // 즐겨찾기 필터 버튼
             ImageView btnFav = new ImageView(MainActivity.this);
             btnFav.setLayoutParams(btnFilterButtonLayoutParams);
             btnFav.setPadding(dp4, dp4, dp4, dp4);
@@ -435,12 +405,11 @@ public class MainActivity extends AppCompatActivity {
             btnFav.setImageResource(R.drawable.favorite);
             btnFav.setOnClickListener(v15 -> {
                 listFilter.removeAllViews();
+
                 // 스티커의 레이아웃 정의
                 FlexboxLayout.LayoutParams filterLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 filterLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
-                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
             });
             listFilterItems.addView(btnFav);
 
@@ -455,14 +424,12 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams filterLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 filterLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
-                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
-                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
-                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
-                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
-                addFilter(filterLayoutParams, listFilter, R.drawable.temp);
+                addFilter(filterLayoutParams, listFilter, R.drawable.fil02);
+                addFilter(filterLayoutParams, listFilter, R.drawable.fil03);
+                addFilter(filterLayoutParams, listFilter, R.drawable.fil04);
             });
             listFilterItems.addView(btnAll);
+
             // 기본으로 전체를 먼저 자동으로 클릭
             btnAll.performClick();
         });
@@ -651,7 +618,10 @@ public class MainActivity extends AppCompatActivity {
         filter.setPadding(dp4, dp4, dp4, dp4);
         filter.setAdjustViewBounds(true);
         filter.setImageResource(resId);
-        filter.setOnClickListener(v -> Toast.makeText(MainActivity.this, "필터 클릭 되었어요.", Toast.LENGTH_SHORT).show());
+        filter.setOnClickListener(v -> {
+            graphicOverlay.clearFilterGraphic();
+            graphicOverlay.add(new FilterGraphic(MainActivity.this, resId));
+        });
 
         listFilter.addView(filter);
     }
@@ -777,7 +747,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (graphicOverlay != null) {
-            graphicOverlay.clear();
+            graphicOverlay.clearFaceGraphic();
         }
 
         mFaceProcessing = new FaceProcessing(this, this::drawFaces);
@@ -846,7 +816,7 @@ public class MainActivity extends AppCompatActivity {
         }
 
         if (graphicOverlay != null) {
-            graphicOverlay.clear();
+            graphicOverlay.clearFaceGraphic();
         }
 
         if (faceProcessingTag) bindAnalysisUseCase();
@@ -861,7 +831,7 @@ public class MainActivity extends AppCompatActivity {
         String imageFileName = "MrPhoto_" + new SimpleDateFormat("yyyyMMdd_HHmmss_SSS", Locale.KOREA).format(new Date()) + ".jpg";
 
         mCaptureGraphic = null;
-        if (mImageAnalysisUseCase != null) mCaptureGraphic = graphicOverlay.getChildView();
+        if (mImageAnalysisUseCase != null) mCaptureGraphic = graphicOverlay.getFaceGraphicViews();
 
         mImageCaptureUseCase.takePicture(Executors.newSingleThreadExecutor(), new ImageCapture.OnImageCapturedCallback() {
             @Override
@@ -911,6 +881,10 @@ public class MainActivity extends AppCompatActivity {
                         }
                     }
                 }
+
+                // 필터가 있는 경우 필터 적용
+                GraphicOverlay.Graphic filterGraphic = graphicOverlay.getFilterGraphicView();
+                if (filterGraphic != null) filterGraphic.draw(canvas, null);
 
                 // region [ 안드로이드 Q 이상 인 경우 사진 저장 방법 ]
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
@@ -990,7 +964,7 @@ public class MainActivity extends AppCompatActivity {
      * 인식한 얼굴을 그릴 때 사용하는 함수
      */
     private void drawFaces(List<Face> faces, InputImage inputImage, Bitmap originalCameraImage) {
-        graphicOverlay.clear();
+        graphicOverlay.clearFaceGraphic();
 
         if (faces == null || faces.size() == 0 || inputImage == null || originalCameraImage == null)
             return;
@@ -1014,7 +988,7 @@ public class MainActivity extends AppCompatActivity {
 
         for (Face face : faces) {
             Bitmap sticker = BitmapFactory.decodeResource(getResources(), mCurrentStickerResourceId);
-            graphicOverlay.add(new FaceGraphic(graphicOverlay, face, sticker, new Size(originalCameraImage.getWidth(), originalCameraImage.getHeight())));
+            graphicOverlay.add(new FaceGraphic(graphicOverlay, face, sticker));
         }
     }
 

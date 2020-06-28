@@ -4,8 +4,6 @@ import android.graphics.Bitmap;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Paint;
-import android.graphics.Rect;
-import android.util.Size;
 
 import androidx.annotation.Nullable;
 
@@ -19,10 +17,8 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
 
     private final Paint facePositionPaint;
     private final Bitmap faceSticker;
-    private final Size imageSize;
 
-    public FaceGraphic(GraphicOverlay overlay, Face face, Bitmap sticker, Size imageSize) {
-        super(overlay);
+    public FaceGraphic(GraphicOverlay overlay, Face face, Bitmap sticker) {
         this.face = face;
         this.overlay = overlay;
 
@@ -30,17 +26,15 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
         facePositionPaint.setColor(Color.WHITE);
 
         faceSticker = sticker;
-        this.imageSize = imageSize;
     }
 
     public FaceGraphic(FaceGraphic faceGraphic) {
-        this(faceGraphic.overlay, faceGraphic.face, faceGraphic.faceSticker, faceGraphic.imageSize);
+        this(faceGraphic.overlay, faceGraphic.face, faceGraphic.faceSticker);
     }
 
     @Override
     public void draw(Canvas canvas, @Nullable MatrixTransformation matrixTransformation) {
         if (face == null) return;
-
         if (matrixTransformation == null) return;
 
         drawSticker(canvas, matrixTransformation);
@@ -48,12 +42,13 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
 
     public void drawSticker(Canvas canvas, MatrixTransformation matrixTransformation) {
         if (faceSticker != null) {
+            //인식된 얼굴이랑 스티커 크기 맞춰줌
             Bitmap resizedFaceSticker = Bitmap.createScaledBitmap(faceSticker,
                     (int) (face.getBoundingBox().width() * matrixTransformation.getXRatio()),
                     (int) (face.getBoundingBox().height() * matrixTransformation.getYRatio()),
                     true
             );
-
+            //캔버스에다가 스티커 그림
             canvas.drawBitmap(resizedFaceSticker,
                     (int) (face.getBoundingBox().left * matrixTransformation.getXRatio()),
                     (int) (face.getBoundingBox().top * matrixTransformation.getYRatio()),
@@ -62,19 +57,8 @@ public class FaceGraphic extends GraphicOverlay.Graphic {
     }
 
     @Override
-    public Size getSize() {
-        return imageSize;
-    }
-
-    @Override
-    public Rect getBoundingBox() {
-        return face.getBoundingBox();
-    }
-
-    @Override
     public String toString() {
         return "FaceGraphic {" + face.toString() + '}';
     }
-
 
 }
