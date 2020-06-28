@@ -33,7 +33,25 @@
                 android:paddingStart="12dp"
                 tools:ignore="RtlSymmetry">
 
+                <ImageView
+                    android:id="@+id/btn_filter_none"
+                    android:layout_width="40dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="5dp"
+                    android:adjustViewBounds="true"
+                    android:padding="4dp"
+                    android:src="@drawable/none"
+                    tools:ignore="ContentDescription" />
 
+                <ImageView
+                    android:id="@+id/boundary"
+                    android:layout_width="20dp"
+                    android:layout_height="40dp"
+                    android:layout_marginEnd="5dp"
+                    android:adjustViewBounds="true"
+                    android:alpha=".60"
+                    android:src="@drawable/line"
+                    tools:ignore="ContentDescription" />
 
             </LinearLayout>
 

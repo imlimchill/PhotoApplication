@@ -2,9 +2,7 @@ package com.MrPhoto.photoapplication.graphic;
 
 import android.content.Context;
 import android.graphics.Canvas;
-import android.graphics.Rect;
 import android.util.AttributeSet;
-import android.util.Size;
 import android.view.View;
 
 import androidx.annotation.Nullable;
@@ -33,8 +31,21 @@ public class GraphicOverlay extends View {
     }
 
     public void clear() {
+        graphics.clear();
+    }
+
+    public void clearFilterGraphic() {
         synchronized (lock) {
-            graphics.clear();
+            for (Graphic graphic : graphics)
+                if (graphic instanceof FilterGraphic) remove(graphic);
+        }
+        postInvalidate();
+    }
+
+    public void clearFaceGraphic() {
+        synchronized (lock) {
+            for (Graphic graphic : graphics)
+                if (graphic instanceof FaceGraphic) remove(graphic);
         }
         postInvalidate();
     }
@@ -52,7 +63,7 @@ public class GraphicOverlay extends View {
         postInvalidate();
     }
 
-    public List<Graphic> getChildView() {
+    public List<Graphic> getFaceGraphicViews() {
         synchronized (lock) {
             List<Graphic> children = new ArrayList<>();
 
@@ -66,12 +77,20 @@ public class GraphicOverlay extends View {
         }
     }
 
+    public Graphic getFilterGraphicView() {
+        synchronized (lock) {
+            for (Graphic graphic : graphics) {
+                if (graphic instanceof FilterGraphic) {
+                    return graphic;
+                }
+            }
+            return null;
+        }
+    }
+
     @Override
     protected void onDraw(Canvas canvas) {
-        super.onDraw(canvas);
-
         synchronized (lock) {
-
             for (Graphic graphic : graphics) {
                 graphic.draw(canvas, matrixTransformation);
             }
@@ -79,25 +98,12 @@ public class GraphicOverlay extends View {
     }
 
     public abstract static class Graphic {
-        private GraphicOverlay overlay;
+        public Graphic() {
 
-        public Graphic(GraphicOverlay overlay) {
-            this.overlay = overlay;
-        }
-
-        public Context getApplicationContext() {
-            return overlay.getContext().getApplicationContext();
         }
 
         public abstract void draw(Canvas canvas, @Nullable MatrixTransformation matrixTransformation);
-
-        public abstract Size getSize();
-
-        public abstract Rect getBoundingBox();
-
-        public void postInvalidate() {
-            overlay.postInvalidate();
-        }
     }
+
 }
 
