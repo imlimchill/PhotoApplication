@@ -12,6 +12,8 @@ import com.MrPhoto.photoapplication.util.MatrixTransformation;
 import java.util.ArrayList;
 import java.util.List;
 
+//그래픽을 그려주는 공간 즉, 캔버스
+
 public class GraphicOverlay extends View {
 
     private final Object lock = new Object();
@@ -33,7 +35,8 @@ public class GraphicOverlay extends View {
     public void clear() {
         graphics.clear();
     }
-
+    //필터 그래픽을 완전 없앰
+    //lock을 걸어주는건 임계영역문제를 해결하기 위해
     public void clearFilterGraphic() {
         synchronized (lock) {
             Graphic filterGraphic = null;
@@ -43,7 +46,7 @@ public class GraphicOverlay extends View {
         }
         postInvalidate();
     }
-
+    //페이스그래픽을 완전 없앰
     public void clearFaceGraphic() {
         synchronized (lock) {
             List<Graphic> faceGraphics = new ArrayList<>();
@@ -53,7 +56,7 @@ public class GraphicOverlay extends View {
         }
         postInvalidate();
     }
-
+    //그래픽 추가
     public void add(Graphic graphic) {
         synchronized (lock) {
             graphics.add(graphic);
@@ -91,7 +94,7 @@ public class GraphicOverlay extends View {
             return null;
         }
     }
-
+    //캔버스에 그리기 위한 메소드
     @Override
     protected void onDraw(Canvas canvas) {
         synchronized (lock) {

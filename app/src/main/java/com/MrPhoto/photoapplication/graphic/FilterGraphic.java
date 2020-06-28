@@ -24,7 +24,7 @@ public class FilterGraphic extends GraphicOverlay.Graphic {
     @Override
     public void draw(Canvas canvas, @Nullable MatrixTransformation matrixTransformation) {
         if (filterBitmap == null) return;
-
+        //크기 맞춰주고, 캔버스에 필터 그려줌
         Bitmap resizedBitmap = Bitmap.createScaledBitmap(filterBitmap, canvas.getWidth(), canvas.getHeight(), true);
         canvas.drawBitmap(resizedBitmap, 0, 0, null);
     }

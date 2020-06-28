@@ -333,11 +333,7 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                // TODO 스티커의 스티커 유무 확인
 
-                addSticker(stikerLayoutParams, listStiker, R.drawable.item01);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.item02);
-                //즐겨찾기,전체 스티커 아이콘 계속 누르면 무한 생성됨. 수정할 부분
             });
 
             listStikerItems.addView(btnFav);
@@ -354,48 +350,17 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.filter_list);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.photo);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.stiker);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item01);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item06);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item07);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item08);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item09);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item10);
+                addSticker(stikerLayoutParams, listStiker, R.drawable.item11);
             });
 
             listStikerItems.addView(btnSticker1);
 
-            // 첫번째 스티커 리스트 추가
-            ImageView sDoraemong = new ImageView(MainActivity.this);
-            sDoraemong.setLayoutParams(btnStickerButtonLayoutParams);
-            sDoraemong.setPadding(dp4, dp4, dp4, dp4);
-            sDoraemong.setAdjustViewBounds(true);
-            sDoraemong.setImageResource(R.drawable.s_do);
-            sDoraemong.setOnClickListener(v15 -> {
-                listStiker.removeAllViews();
-
-                FlexboxLayout.LayoutParams stikerLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
-                stikerLayoutParams.setMargins(dp4, dp4, dp4, dp4);
-
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_1);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_2);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_3);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_4);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_5);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_6);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_7);
-                addSticker(stikerLayoutParams, listStiker, R.drawable.s_do_8);
-            });
-
-            listStikerItems.addView(sDoraemong);
 
             // 기본으로 첫번째 스티커 를 먼저 자동으로 클릭
             btnSticker1.performClick();
@@ -445,7 +410,6 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams filterLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 filterLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                addFilter(filterLayoutParams, listFilter, R.drawable.filter_1);
             });
             listFilterItems.addView(btnFav);
 
@@ -460,7 +424,9 @@ public class MainActivity extends AppCompatActivity {
                 FlexboxLayout.LayoutParams filterLayoutParams = new FlexboxLayout.LayoutParams(Utils.dp2px(MainActivity.this, 60), Utils.dp2px(MainActivity.this, 60));
                 filterLayoutParams.setMargins(dp4, dp4, dp4, dp4);
 
-                addFilter(filterLayoutParams, listFilter, R.drawable.filter_1);
+                addFilter(filterLayoutParams, listFilter, R.drawable.fil02);
+                addFilter(filterLayoutParams, listFilter, R.drawable.fil03);
+                addFilter(filterLayoutParams, listFilter, R.drawable.fil04);
             });
             listFilterItems.addView(btnAll);
 
